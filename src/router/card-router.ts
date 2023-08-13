@@ -34,6 +34,12 @@ cardRouter.post('/remove',
     cardController.remove
 );
 
+cardRouter.post('/switch_order',
+    body('cardId1').notEmpty(),
+    body('cardId2').notEmpty(),
+    cardController.switchOrder
+)
+
 cardRouter.get('/',
     body('moduleId').notEmpty(),
     cardController.getCards

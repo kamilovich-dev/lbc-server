@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import cardService from 'service/card-service'
 import { card as CardModel } from 'models/card'
-import fileService from 'service/file-service'
-import { UploadedFile } from 'express-fileupload'
+
 import { validationResult } from 'express-validator'
 import ApiError from 'exceptions/api-error'
+import { UploadedFile } from 'express-fileupload'
 
 class CardController {
     async create(req: Request, res: Response, next: NextFunction) {
@@ -29,14 +29,8 @@ class CardController {
             }
             const { cardId, term, definition, isFavorite } = req.body
 
-            const card = await CardModel.findOne( {where: {id: cardId}, raw: true} )
-            if (card?.img_url) { //Delete already existing file
-                await fileService.removeFile(card.img_url)
-            }
-
             const file = req.files?.img as UploadedFile
-            const imgUrl = await fileService.saveFile(file, req.user.email)
-            const cardData = await cardService.update(cardId, term, definition, isFavorite, imgUrl)
+            const cardData = await cardService.update(cardId, term, definition, isFavorite, file, req.user.email)
             return res.json(cardData)
         } catch(e) {
             next(e);
@@ -50,13 +44,23 @@ class CardController {
                 return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
             }
             const { cardId } = req.body
-            const card = await CardModel.findOne( {where: {id: cardId}, raw: true} )
-            if (card?.img_url) {
-                await fileService.removeFile(card.img_url)
-            }
 
             await cardService.remove(cardId)
             return res.json( {} )
+        } catch(e) {
+            next(e);
+        }
+    }
+
+    async switchOrder(req: Request, res: Response, next: NextFunction){
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
+            }
+            const { cardId1, cardId2 } = req.body
+            const cards = await cardService.switchOrder( cardId1, cardId2 )
+            return res.json({})
         } catch(e) {
             next(e);
         }

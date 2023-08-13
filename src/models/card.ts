@@ -11,11 +11,12 @@ export interface cardAttributes {
   createdAt?: Date;
   updatedAt?: Date;
   img_url?: string;
+  order: number;
 }
 
 export type cardPk = "id";
 export type cardId = card[cardPk];
-export type cardOptionalAttributes = "id" | "is_favorite" | "createdAt" | "updatedAt" | "img_url";
+export type cardOptionalAttributes = "id" | "is_favorite" | "createdAt" | "updatedAt" | "img_url" | "order";
 export type cardCreationAttributes = Optional<cardAttributes, cardOptionalAttributes>;
 
 export class card extends Model<cardAttributes, cardCreationAttributes> implements cardAttributes {
@@ -27,6 +28,7 @@ export class card extends Model<cardAttributes, cardCreationAttributes> implemen
   createdAt?: Date;
   updatedAt?: Date;
   img_url?: string;
+  order!: number;
 
   // card belongsTo user via module_id
   module!: user;
@@ -65,6 +67,11 @@ export class card extends Model<cardAttributes, cardCreationAttributes> implemen
     img_url: {
       type: DataTypes.STRING(1024),
       allowNull: true
+    },
+    order: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0
     }
   }, {
     sequelize,
