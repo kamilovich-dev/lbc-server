@@ -31,12 +31,30 @@ class ModuleService {
         await module.destroy()
     }
 
-    async getModules(userId: number) {
+    async getModules(userId: number, search: string, byAlphabet: string) {
         const modules = await ModuleModel.findAll({where: { user_id: userId }, raw: true})
-        const moduleDtos: ModuleDto[] = []
+        let moduleDtos: ModuleDto[] = []
         for (let module of modules) {
             moduleDtos.push(new ModuleDto(module))
         }
+
+        if (search) {
+            moduleDtos = moduleDtos.filter( module => {
+                const mN = module.name.toLowerCase()
+                const mD = module.description?.toLowerCase()
+                const s = search.toLowerCase()
+                if (mN.includes(s) || mD?.includes(s)) return true
+            })
+        }
+
+        if (byAlphabet) {
+            moduleDtos = moduleDtos.sort( (a, b) => {
+                return (byAlphabet === 'asc') ?
+                    ( a.name > b.name ? 1 : -1 ) :
+                    ( a.name > b.name ? -1 : 1 )
+            } )
+        }
+
         return { modules: moduleDtos }
     }
 

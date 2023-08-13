@@ -54,13 +54,19 @@ class ModuleController {
                 return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
             }
             const { userId } = req.body
-            const modules = await ModuleService.getModules( userId )
+            const { search, by_alphabet } = req.query as unknown as TQuery
+            const modules = await ModuleService.getModules( userId, search, by_alphabet )
             return res.json(modules)
         } catch(e) {
             next(e);
         }
     }
 
+}
+
+interface TQuery {
+    search: string,
+    by_alphabet: string,
 }
 
 export default new ModuleController();
