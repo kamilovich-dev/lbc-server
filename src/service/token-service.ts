@@ -5,8 +5,8 @@ import ApiError from 'exceptions/api-error'
 class TokenService {
 
     generateTokens(payload: any) {
-        const accessToken = jwt.sign(payload, process.env.JWT_ACCESS_SECRET!, {expiresIn: '5m'} );
-        const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET!, {expiresIn: '10m'} );
+        const accessToken = jwt.sign(payload, process.env.JWT_ACCESS_SECRET!, {expiresIn: '24h'} );
+        const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET!, {expiresIn: '120h'} );
         return {
             accessToken,
             refreshToken
