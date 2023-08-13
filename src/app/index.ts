@@ -40,6 +40,7 @@ app.use(errorMiddleware);
 const startServer = async () => {
     try {
         app.listen(PORT, () => console.log(`Сервер запущен PORT=${PORT}`))
+        console.log('hi')
     } catch (e) {
         console.log(e);
     }
