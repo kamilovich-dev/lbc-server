@@ -1,6 +1,7 @@
 import { Router } from 'express'
-import { body } from 'express-validator'
+import { body, check } from 'express-validator'
 import cardController from 'controllers/card-controller'
+import fileUploadMiddleware from 'express-fileupload'
 
 const cardRouter = Router();
 
@@ -13,10 +14,18 @@ cardRouter.post('/create',
 );
 
 cardRouter.post('/update',
-    body('cardId').notEmpty(),
-    body('term').optional(),
-    body('definition').optional(),
-    body('isFavorite').optional(),
+    fileUploadMiddleware({}),
+    check('cardId').notEmpty(),
+    check('term').optional(),
+    check('definition').optional(),
+    check('isFavorite').optional(),
+    check('img').custom((value,{req}) => {
+        const mimetype = req.files.img.mimetype
+        if (mimetype === 'image/png'
+            || mimetype === 'image/jpg'
+                || mimetype === 'image/jpeg') return true
+        return false
+    }).withMessage('Неверный тип изображения'),
     cardController.update
 );
 

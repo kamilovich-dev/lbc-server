@@ -10,7 +10,7 @@ class CardService {
         return { card: cardDto }
     }
 
-    async update(cardId: number, term: string, definition: string, isFavorite: boolean) {
+    async update(cardId: number, term: string, definition: string, isFavorite: boolean, imgUrl: string) {
         const card = await CardModel.findOne({ where: {id: cardId}});
         if (!card) {
             throw ApiError.BadRequest(`Карточка с id=${cardId} не найдена`);
@@ -18,10 +18,11 @@ class CardService {
         card.term = term
         card.definition = definition
         card.is_favorite = isFavorite
+        card.img_url = imgUrl
         await card.save()
 
         const cardDto = new CardDto(card);
-        return { card: cardDto }
+        return { cardDto }
     }
 
     async remove(cardId: number) {
