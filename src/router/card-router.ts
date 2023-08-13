@@ -16,10 +16,10 @@ cardRouter.post('/create',
 cardRouter.post('/update',
     fileUploadMiddleware({}),
     check('cardId').notEmpty(),
-    check('term').optional(),
-    check('definition').optional(),
+    check('term').notEmpty(),
+    check('definition').notEmpty(),
     check('isFavorite').optional(),
-    check('img').custom((value,{req}) => {
+    check('img').optional().custom((value,{req}) => {
         const mimetype = req.files.img.mimetype
         if (mimetype === 'image/png'
             || mimetype === 'image/jpg'

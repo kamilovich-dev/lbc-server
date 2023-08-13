@@ -15,8 +15,9 @@ class ModuleService {
         if (!module) {
             throw ApiError.BadRequest(`Модуль с id=${id} не найден`);
         }
+
         module.name = name
-        module.description = description
+        if (description) module.description = description
         await module.save()
 
         const moduleDto = new ModuleDto(module);

@@ -19,17 +19,18 @@ class CardService {
             throw ApiError.BadRequest(`Карточка с id=${cardId} не найдена`);
         }
 
-        if (card.dataValues.img_url) { //Delete already existing file
-            await fileService.removeFile(card.dataValues.img_url)
-        }
-
-        const imgUrl = await fileService.saveFile(imgFile, email)
         card.term = term
         card.definition = definition
-        card.is_favorite = isFavorite
-        card.img_url = imgUrl
-        await card.save()
+        if (isFavorite) card.is_favorite = isFavorite
+        if (imgFile && email) {
+            if (card.dataValues.img_url) { //Delete already existing file
+                await fileService.removeFile(card.dataValues.img_url)
+            }
+            const imgUrl = await fileService.saveFile(imgFile, email)
+            card.img_url = imgUrl
+        }
 
+        await card.save()
         const cardDto = new CardDto(card);
         return { cardDto }
     }
@@ -75,10 +76,10 @@ class CardService {
 
         if (search) {
             cardDtos = cardDtos.filter( card => {
-                const cN = card.term.toLowerCase()
+                const cT = card.term.toLowerCase()
                 const cD = card.definition?.toLowerCase()
                 const s = search.toLowerCase()
-                if (cN.includes(s) || cD?.includes(s)) return true
+                if (cT.includes(s) || cD?.includes(s)) return true
             })
         }
 
