@@ -1,7 +1,6 @@
 import { Router } from 'express'
 import { body } from 'express-validator'
 import userController from 'controllers/user-controller'
-import authMiddleware from 'middlewares/auth-middleware'
 
 const userRouter = Router();
 
@@ -14,6 +13,6 @@ userRouter.post('/login', userController.login);
 userRouter.post('/logout', userController.logout);
 userRouter.get('/activate/:link', userController.activate);
 userRouter.get('/refresh-token', userController.refresh);
-userRouter.get('/', authMiddleware, userController.getUsers);
+userRouter.get('/', userController.getUsers);
 
 export default userRouter
