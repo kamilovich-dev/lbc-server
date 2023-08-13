@@ -53,13 +53,19 @@ class CardController {
                 return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
             }
             const { moduleId } = req.body
-            const cards = await CardService.getCards( moduleId )
+            const { search, by_alphabet } = req.query as unknown as TQuery
+            const cards = await CardService.getCards( moduleId, search, by_alphabet )
             return res.json(cards)
         } catch(e) {
             next(e);
         }
     }
 
+}
+
+interface TQuery {
+    search: string,
+    by_alphabet: string,
 }
 
 export default new CardController();

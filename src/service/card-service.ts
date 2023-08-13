@@ -32,12 +32,30 @@ class CardService {
         await card.destroy()
     }
 
-    async getCards(moduleId: number) {
+    async getCards(moduleId: number, search: string, byAlphabet: string) {
         const cards = await CardModel.findAll({where: { module_id: moduleId }, raw: true})
-        const cardDtos: CardDto[] = []
+        let cardDtos: CardDto[] = []
         for (let card of cards) {
             cardDtos.push(new CardDto(card))
         }
+
+        if (search) {
+            cardDtos = cardDtos.filter( card => {
+                const cN = card.term.toLowerCase()
+                const cD = card.definition?.toLowerCase()
+                const s = search.toLowerCase()
+                if (cN.includes(s) || cD?.includes(s)) return true
+            })
+        }
+
+        if (byAlphabet) {
+            cardDtos = cardDtos.sort( (a, b) => {
+                return (byAlphabet === 'asc') ?
+                    ( a.term > b.term ? 1 : -1 ) :
+                    ( a.term > b.term ? -1 : 1 )
+            } )
+        }
+
         return { cards: cardDtos }
     }
 
