@@ -49,11 +49,10 @@ class ModuleController {
 
     async getModules(req: Request, res: Response, next: NextFunction) {
         try {
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
+            const userId = req.user.id
+            if (!userId) {
+                return next(ApiError.UnauthorizedError());
             }
-            const { userId } = req.body
             const { search, by_alphabet } = req.query as unknown as TQuery
             const modules = await ModuleService.getModules( userId, search, by_alphabet )
             return res.json(modules)

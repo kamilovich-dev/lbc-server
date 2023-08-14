@@ -24,7 +24,6 @@ moduleRouter.post('/remove',
 );
 
 moduleRouter.get('/',
-    body('userId').notEmpty(),
     moduleController.getModules
 );
 
