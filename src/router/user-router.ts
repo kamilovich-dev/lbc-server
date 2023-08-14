@@ -12,7 +12,7 @@ userRouter.post('/registration',
 userRouter.post('/login', userController.login);
 userRouter.post('/logout', userController.logout);
 userRouter.get('/activate/:link', userController.activate);
-userRouter.get('/refresh-token', userController.refresh);
+userRouter.get('/refresh_token', userController.refresh);
 userRouter.get('/', userController.getUsers);
 
 export default userRouter
