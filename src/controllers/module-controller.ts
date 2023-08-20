@@ -11,8 +11,9 @@ class ModuleController {
             if (!errors.isEmpty()) {
                 return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
             }
-            const {userId, name, description } = req.body
-            const moduleData =  await ModuleService.create(userId, name, description)
+            const {id } = req.user
+            const {name, description } = req.body
+            const moduleData =  await ModuleService.create(id, name, description)
             return res.json(moduleData)
         } catch(e) {
             next(e);
@@ -53,8 +54,8 @@ class ModuleController {
             if (!userId) {
                 return next(ApiError.UnauthorizedError());
             }
-            const { search, by_alphabet } = req.query as unknown as TQuery
-            const modules = await ModuleService.getModules( userId, search, by_alphabet )
+            const { by_search, by_alphabet } = req.query as unknown as TQuery
+            const modules = await ModuleService.getModules( userId, by_search, by_alphabet )
             return res.json(modules)
         } catch(e) {
             next(e);
@@ -64,7 +65,7 @@ class ModuleController {
 }
 
 interface TQuery {
-    search: string,
+    by_search: string,
     by_alphabet: string,
 }
 

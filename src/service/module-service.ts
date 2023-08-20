@@ -1,4 +1,5 @@
 import { module as ModuleModel } from 'models/module'
+import { card as CardModel } from 'models/card'
 import ModuleDto from 'dtos/module-dto'
 import ApiError from 'exceptions/api-error'
 
@@ -32,18 +33,19 @@ class ModuleService {
         await module.destroy()
     }
 
-    async getModules(userId: number, search: string, byAlphabet: string) {
+    async getModules(userId: number, bySearch: string, byAlphabet: string) {
         const modules = await ModuleModel.findAll({where: { user_id: userId }, raw: true})
         let moduleDtos: ModuleDto[] = []
         for (let module of modules) {
-            moduleDtos.push(new ModuleDto(module))
+            const cards = await CardModel.findAll({where: { module_id: module.id }, raw: true})
+            moduleDtos.push(new ModuleDto(module, cards.length))
         }
 
-        if (search) {
+        if (bySearch) {
             moduleDtos = moduleDtos.filter( module => {
                 const mN = module.name.toLowerCase()
                 const mD = module.description?.toLowerCase()
-                const s = search.toLowerCase()
+                const s = bySearch.toLowerCase()
                 if (mN.includes(s) || mD?.includes(s)) return true
             })
         }

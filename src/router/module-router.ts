@@ -5,7 +5,6 @@ import moduleController from 'controllers/module-controller'
 const moduleRouter = Router();
 
 moduleRouter.post('/create',
-    body('userId').notEmpty(),
     body('name').notEmpty(),
     body('description').optional(),
     moduleController.create
