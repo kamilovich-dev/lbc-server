@@ -30,6 +30,12 @@ class ModuleService {
         if (!module) {
             throw ApiError.BadRequest(`Модуль с id=${id} не найден`);
         }
+
+        const cards = await CardModel.findAll({where: { module_id: id }, raw: true})
+        if (cards.length > 0) {
+            throw ApiError.BadRequest(`Модуль имеет созданные карточки`)
+        }
+
         await module.destroy()
     }
 
