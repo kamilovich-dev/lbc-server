@@ -65,7 +65,7 @@ class CardService {
         await card2.save()
     }
 
-    async getCards(moduleId: number, search: string, byAlphabet: string) {
+    async getCards(moduleId: number, bySearch: string, byAlphabet: string) {
         const cards = await CardModel.findAll({where: { module_id: moduleId }, order: [
             ['order', 'ASC']
         ], raw: true})
@@ -74,11 +74,11 @@ class CardService {
             cardDtos.push(new CardDto(card))
         }
 
-        if (search) {
+        if (bySearch) {
             cardDtos = cardDtos.filter( card => {
                 const cT = card.term.toLowerCase()
                 const cD = card.definition?.toLowerCase()
-                const s = search.toLowerCase()
+                const s = bySearch.toLowerCase()
                 if (cT.includes(s) || cD?.includes(s)) return true
             })
         }

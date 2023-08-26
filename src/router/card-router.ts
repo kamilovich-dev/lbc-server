@@ -40,7 +40,7 @@ cardRouter.post('/switch_order',
     cardController.switchOrder
 )
 
-cardRouter.get('/',
+cardRouter.post('/',
     body('moduleId').notEmpty(),
     cardController.getCards
 );

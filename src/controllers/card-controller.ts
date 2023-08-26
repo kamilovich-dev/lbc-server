@@ -73,8 +73,8 @@ class CardController {
                 return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
             }
             const { moduleId } = req.body
-            const { search, by_alphabet } = req.query as unknown as TQuery
-            const cards = await cardService.getCards( moduleId, search, by_alphabet )
+            const { by_search, by_alphabet } = req.query as unknown as TQuery
+            const cards = await cardService.getCards( moduleId, by_search, by_alphabet )
             return res.json(cards)
         } catch(e) {
             next(e);
@@ -84,7 +84,7 @@ class CardController {
 }
 
 interface TQuery {
-    search: string,
+    by_search: string,
     by_alphabet: string,
 }
 
