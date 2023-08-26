@@ -26,6 +26,7 @@ cardRouter.post('/update',
                 || mimetype === 'image/jpeg') return true
         return false
     }).withMessage('Неверный тип изображения'),
+    check('isDeleteImg').optional().isBoolean(),
     cardController.update
 );
 

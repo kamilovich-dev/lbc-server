@@ -14,7 +14,7 @@ class CardService {
         return { card: cardDto }
     }
 
-    async update(cardId: number, term: string, definition: string, isFavorite: boolean, imgFile:UploadedFile, email: string) {
+    async update(cardId: number, term: string, definition: string, isFavorite: boolean, isDeleteImg:boolean, imgFile:UploadedFile, email: string) {
         const card = await CardModel.findOne({ where: {id: cardId}});
         if (!card) {
             throw ApiError.BadRequest(`Карточка с id=${cardId} не найдена`);
@@ -23,10 +23,14 @@ class CardService {
         card.term = term
         card.definition = definition
         if (isFavorite) card.is_favorite = isFavorite
-        if (imgFile && email) {
-            if (card.dataValues.img_url) { //Delete already existing file
+
+        if (isDeleteImg) {
+            if (card.dataValues.img_url) {
                 await fileService.removeFile(card.dataValues.img_url)
+                card.img_url = ''
             }
+        } else if (imgFile && email) {
+            if (card.dataValues.img_url) await fileService.removeFile(card.dataValues.img_url)
             const imgUrl = await fileService.saveFile(imgFile, email)
             card.img_url = imgUrl
         }
