@@ -73,12 +73,8 @@ class CardService {
         let cardDtos: CardDto[] = []
         for (let card of cards) {
 
-            const API_URL = process.env.API_URL;
-            const IMG_URL = card.img_url;
-
             cardDtos.push(new CardDto({
-                ...card,
-                img_url: (API_URL && IMG_URL) ? path.join(API_URL, IMG_URL) : IMG_URL
+                ...card
             }))
         }
 
