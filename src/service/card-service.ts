@@ -1,4 +1,5 @@
 import { card as CardModel } from 'models/card'
+import * as path from 'path';
 import CardDto from 'dtos/card-dto'
 import ApiError from 'exceptions/api-error'
 import fileService from 'service/file-service'
@@ -32,7 +33,7 @@ class CardService {
 
         await card.save()
         const cardDto = new CardDto(card);
-        return { cardDto }
+        return { card: cardDto }
     }
 
     async remove(cardId: number) {
@@ -71,7 +72,14 @@ class CardService {
         ], raw: true})
         let cardDtos: CardDto[] = []
         for (let card of cards) {
-            cardDtos.push(new CardDto(card))
+
+            const API_URL = process.env.API_URL;
+            const IMG_URL = card.img_url;
+
+            cardDtos.push(new CardDto({
+                ...card,
+                img_url: (API_URL && IMG_URL) ? path.join(API_URL, IMG_URL) : IMG_URL
+            }))
         }
 
         if (bySearch) {

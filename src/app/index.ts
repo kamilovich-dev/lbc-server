@@ -12,6 +12,7 @@ import dbMiddleware from 'middlewares/db-middleware'
 import authMiddleware from 'middlewares/auth-middleware'
 
 const PORT = process.env.PORT || 9999;
+const STATIC_PATH = process.env.STATIC_PATH || 'static'
 const app = express();
 
 app.use(express.json());
@@ -34,6 +35,8 @@ app.use('/api/card',
     authMiddleware,
     dbMiddleware,
     cardRouter);
+
+app.use(express.static(STATIC_PATH))
 
 app.use(errorMiddleware);
 
