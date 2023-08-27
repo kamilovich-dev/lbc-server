@@ -20,6 +20,7 @@ class CardService {
             throw ApiError.BadRequest(`Карточка с id=${cardId} не найдена`);
         }
 
+        console.log(definition)
         card.term = term
         card.definition = definition
         if (isFavorite) card.is_favorite = isFavorite

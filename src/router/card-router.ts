@@ -17,7 +17,7 @@ cardRouter.post('/update',
     fileUploadMiddleware({}),
     check('cardId').notEmpty(),
     check('term').notEmpty(),
-    check('definition').notEmpty(),
+    check('definition').optional(),
     check('isFavorite').optional(),
     check('img').optional().custom((value,{req}) => {
         const mimetype = req.files.img.mimetype

@@ -18,7 +18,7 @@ class ModuleService {
         }
 
         module.name = name
-        if (description) module.description = description
+        module.description = description
         await module.save()
 
         const moduleDto = new ModuleDto(module);

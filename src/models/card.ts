@@ -4,31 +4,31 @@ import type { user, userId } from './user';
 
 export interface cardAttributes {
   id: number;
+  order: number;
   term: string;
-  definition: string;
+  definition?: string;
   is_favorite?: boolean;
+  img_url?: string;
   module_id: number;
   createdAt?: Date;
   updatedAt?: Date;
-  img_url?: string;
-  order: number;
 }
 
 export type cardPk = "id";
 export type cardId = card[cardPk];
-export type cardOptionalAttributes = "id" | "is_favorite" | "createdAt" | "updatedAt" | "img_url" | "order";
+export type cardOptionalAttributes = "id" | "definition" | "is_favorite" | "img_url" | "createdAt" | "updatedAt";
 export type cardCreationAttributes = Optional<cardAttributes, cardOptionalAttributes>;
 
 export class card extends Model<cardAttributes, cardCreationAttributes> implements cardAttributes {
   id!: number;
+  order!: number;
   term!: string;
-  definition!: string;
+  definition?: string;
   is_favorite?: boolean;
+  img_url?: string;
   module_id!: number;
   createdAt?: Date;
   updatedAt?: Date;
-  img_url?: string;
-  order!: number;
 
   // card belongsTo user via module_id
   module!: user;
@@ -44,16 +44,24 @@ export class card extends Model<cardAttributes, cardCreationAttributes> implemen
       allowNull: false,
       primaryKey: true
     },
+    order: {
+      type: DataTypes.INTEGER,
+      allowNull: false
+    },
     term: {
       type: DataTypes.STRING(1024),
       allowNull: false
     },
     definition: {
       type: DataTypes.STRING(1024),
-      allowNull: false
+      allowNull: true
     },
     is_favorite: {
       type: DataTypes.BOOLEAN,
+      allowNull: true
+    },
+    img_url: {
+      type: DataTypes.STRING(1024),
       allowNull: true
     },
     module_id: {
@@ -63,15 +71,6 @@ export class card extends Model<cardAttributes, cardCreationAttributes> implemen
         model: 'user',
         key: 'id'
       }
-    },
-    img_url: {
-      type: DataTypes.STRING(1024),
-      allowNull: true
-    },
-    order: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 0
     }
   }, {
     sequelize,
