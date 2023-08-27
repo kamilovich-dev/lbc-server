@@ -75,8 +75,8 @@ class CardService {
             ['order', 'ASC']
         ], raw: true})
         let cardDtos: CardDto[] = []
-        for (let card of cards) {
 
+        for (let card of cards) {
             cardDtos.push(new CardDto({
                 ...card
             }))
