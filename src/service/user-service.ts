@@ -9,7 +9,7 @@ import { user as UserModel } from 'models/user'
 class UserService {
 
     async registration(email: string, password: string) {
-        const candidate = await UserModel.findOne({ where: { email }, raw: true });
+        const candidate = await UserModel.findOne({ where: { email, is_activated: true }, raw: true });
         if (candidate) {
             throw ApiError.BadRequest(`Пользователь с почтовым адресом ${email} уже существует`);
         }
@@ -38,6 +38,10 @@ class UserService {
 
         if (!user) {
             throw ApiError.BadRequest('Пользователь с таким email не найден');
+        }
+
+        if (!user.is_activated) {
+            throw ApiError.BadRequest('Пользователь не активирован');
         }
 
         const isPassEquals = await bcrypt.compare(password, user.password!);
