@@ -27,10 +27,10 @@ class CardController {
             if (!errors.isEmpty()) {
                 return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
             }
-            const { cardId, term, definition, isFavorite, isDeleteImg } = req.body
+            const { email } = req.user
 
             const file = req.files?.img as UploadedFile
-            const cardData = await cardService.update(cardId, term, definition, isFavorite, isDeleteImg, file, req.user.email)
+            const cardData = await cardService.update(email, file, req.body)
             return res.json(cardData)
         } catch(e) {
             next(e);

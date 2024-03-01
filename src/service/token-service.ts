@@ -2,11 +2,14 @@ import jwt from 'jsonwebtoken'
 import { refresh_token as RefreshTokenModel } from 'models/refresh_token'
 import ApiError from 'exceptions/api-error'
 
+export const refreshTokenExpires = 1000 * 60 * 60 * 24 * 30 //30 дней
+export const accessTokenExpires = 1000 * 60 * 60 * 24 //1 день
+
 class TokenService {
 
     generateTokens(payload: any) {
-        const accessToken = jwt.sign(payload, process.env.JWT_ACCESS_SECRET!, {expiresIn: '24h'} );
-        const refreshToken = jwt.sign(payload, process.env.JWT_REFRESH_SECRET!, {expiresIn: '120h'} );
+        const accessToken = jwt.sign(payload, process.env.SECRET!, {expiresIn: `${accessTokenExpires}ms`} );
+        const refreshToken = jwt.sign(payload, process.env.SECRET!, {expiresIn: `${refreshTokenExpires}ms`} );
         return {
             accessToken,
             refreshToken
@@ -15,7 +18,7 @@ class TokenService {
 
     validateAccessToken(token: string) {
         try {
-            const userData = jwt.verify(token, process.env.JWT_ACCESS_SECRET!);
+            const userData = jwt.verify(token, process.env.SECRET!);
             return userData;
         } catch(e) {
             return null;
@@ -24,7 +27,7 @@ class TokenService {
 
     validateRefreshToken(token: string) {
         try {
-            const userData = jwt.verify(token, process.env.JWT_REFRESH_SECRET!);
+            const userData = jwt.verify(token, process.env.SECRET!);
             return userData;
         } catch(e) {
             return null;
@@ -32,11 +35,11 @@ class TokenService {
     }
 
     async saveToken(userId: number, refreshToken: string) {
-        const token = await RefreshTokenModel.findOne({ where: { user_id: userId } });
-        if (token) {
-            token.token = refreshToken;
-            await token.save();
-            return;
+        const tokens = await RefreshTokenModel.findAll({ where: { user_id: userId } });
+        if (tokens.length >= 5) {
+            for (let token of tokens) {
+                await RefreshTokenModel.destroy({where: { token: token.token }})
+            }
         }
         const new_token = await RefreshTokenModel.create({user_id: userId, token: refreshToken});
         await new_token.save();

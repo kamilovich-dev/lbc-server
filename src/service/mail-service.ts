@@ -18,12 +18,13 @@ class MailService {
             }
         })
     }
+
     async sendActivationMail(to: string, link: string) {
         try {
             await this.transporter.sendMail({
                 from: process.env.SMTP_USER,
                 to,
-                subject: 'Активация аккаунта на ' + process.env.API_URL,
+                subject: 'Активация аккаунта на ' + process.env.SERVER_URL,
                 text: '',
                 html:
                 `
@@ -39,6 +40,28 @@ class MailService {
             }
         }
 
+    }
+
+    async sendForgotPasswordMail(to: string, link: string) {
+        try {
+            await this.transporter.sendMail({
+                from: process.env.SMTP_USER,
+                to,
+                subject: 'Сброс пароля для ' + process.env.CLIENT_URL,
+                text: '',
+                html:
+                `
+                  <div>
+                        <h1>Для сброса пароля перейдите по ссылке</h1>
+                        <a href="${link}">${link}</a>
+                    </div>
+                `
+            })
+        } catch(e: unknown) {
+            if (e instanceof Error) {
+                throw ApiError.MailError(`Ошибка при отправке ссылки для сброса пароля: ${e.message}`, e);
+            }
+        }
     }
 }
 

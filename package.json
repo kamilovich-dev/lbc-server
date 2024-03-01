@@ -24,8 +24,10 @@
     "nodemailer": "^6.9.3",
     "pg": "^8.11.1",
     "pg-hstore": "^2.3.4",
+    "redis": "^4.6.13",
     "sequelize": "^6.32.1",
     "sequelize-auto": "^0.8.8",
+    "ts-md5": "^1.3.1",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

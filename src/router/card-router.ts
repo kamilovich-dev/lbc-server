@@ -18,15 +18,23 @@ cardRouter.post('/update',
     check('cardId').notEmpty(),
     check('term').notEmpty(),
     check('definition').optional(),
-    check('isFavorite').optional(),
-    check('img').optional().custom((value,{req}) => {
-        const mimetype = req.files.img.mimetype
+    check('isFavorite').optional().custom((value, {req}) => {
+        if (value === 'true' || value === 'false') return true
+        return false
+    }),
+    check('img').custom((value,{req}) => {
+        const img = req.files.img
+        if (!img) return true
+
+        const mimetype = img.mimetype
         if (mimetype === 'image/png'
             || mimetype === 'image/jpg'
                 || mimetype === 'image/jpeg') return true
         return false
     }).withMessage('Неверный тип изображения'),
-    check('isDeleteImg').optional().isBoolean(),
+    body('imgUrl').optional().custom((value, {req}) => {
+        return (value === 'null') ? true : false
+    }).withMessage('Для imgUrl доступно только значение null'),
     cardController.update
 );
 

@@ -1,6 +1,7 @@
 import  userService from 'service/user-service'
 import { validationResult } from 'express-validator'
 import { Request, Response, NextFunction } from 'express';
+import { refreshTokenExpires } from 'service/token-service';
 import ApiError from 'exceptions/api-error'
 import UserDto from 'dtos/user-dto';
 
@@ -33,8 +34,11 @@ class UserController {
         try {
             const {email, password} = req.body;
             const userData = await userService.login(email, password);
-            res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true})
-            return res.json(userData);
+            res.cookie('refreshToken', userData.refreshToken, {maxAge: refreshTokenExpires, httpOnly: true})
+            return res.json({
+                user: userData.user,
+                accessToken: userData.accessToken
+            });
         } catch(e) {
             next(e);
         }
@@ -43,6 +47,7 @@ class UserController {
     async logout(req: Request, res: Response, next: NextFunction) {
         try {
             const { refreshToken } = req.cookies;
+            console.log(`try to logout: ${refreshToken}`)
             if (refreshToken) await userService.logout(refreshToken);
             res.clearCookie('refreshToken');
             return res.json( {} );
@@ -53,10 +58,14 @@ class UserController {
 
     async refresh(req: Request, res: Response, next: NextFunction) {
         try {
+            console.log('refresh trying')
             const {refreshToken} = req.cookies;
             const userData = await userService.refresh(refreshToken);
-            res.cookie('refreshToken', userData.refreshToken, {maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true})
-            return res.json(userData);
+            res.cookie('refreshToken', userData.refreshToken, {maxAge: refreshTokenExpires, httpOnly: true})
+            return res.json({
+                user: userData.user,
+                accessToken: userData.accessToken
+            });
         } catch(e) {
             next(e);
         }
@@ -72,6 +81,34 @@ class UserController {
             return res.json( { users: userDtos });
         } catch(e) {
             next(e);
+        }
+    }
+
+    async passwordForgot(req: Request, res: Response, next: NextFunction) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
+            }
+            const { email } = req.body
+            await userService.passwordForgot(email)
+            return res.json({success: true, message: 'Проверьте почту'})
+        } catch(e) {
+            next(e)
+        }
+    }
+
+    async passwordReset(req: Request, res: Response, next: NextFunction) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
+            }
+            const { email, password, token } = req.body
+            const data = await userService.passwordReset(email, password, token)
+            return res.json({success: true, message: 'Пароль изменен', data})
+        } catch(e) {
+            next(e)
         }
     }
 }

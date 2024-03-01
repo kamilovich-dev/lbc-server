@@ -14,6 +14,8 @@ moduleRouter.post('/update',
     body('moduleId').notEmpty(),
     body('name').notEmpty(),
     body('description').optional(),
+    body('isFavorite').optional().isBoolean(),
+    body('isPublished').optional().isBoolean(),
     moduleController.update
 );
 

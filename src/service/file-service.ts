@@ -7,10 +7,10 @@ class FileService {
 
     private staticPath = process.env.STATIC_PATH || 'static'
 
-    async saveFile(file: UploadedFile, email: string) {
+    async saveFile(file: UploadedFile, email: string, prefix?: string) {
         try {
             const fileExtension = '.' + file.mimetype.replace(/.*\//, '')
-            const fileName = uuid.v4() + fileExtension;
+            const fileName = `${prefix ?? ''}${uuid.v4()}${fileExtension}`;
 
             const directory = path.resolve(this.staticPath, email)
 

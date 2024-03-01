@@ -4,6 +4,7 @@ import CardDto from 'dtos/card-dto'
 import ApiError from 'exceptions/api-error'
 import fileService from 'service/file-service'
 import { UploadedFile } from 'express-fileupload'
+import UserDto from 'dtos/user-dto';
 
 class CardService {
 
@@ -14,21 +15,24 @@ class CardService {
         return { card: cardDto }
     }
 
-    async update(cardId: number, term: string, definition: string, isFavorite: boolean, isDeleteImg:boolean, imgFile:UploadedFile, email: string) {
+    async update( email: string, imgFile:UploadedFile, data:
+        Omit<CardDto, 'isFavorite' | 'id'> & {
+                isFavorite: string | undefined,
+                cardId: string}) {
+
+        const { cardId, term, definition, isFavorite, imgUrl } = data
         const card = await CardModel.findOne({ where: {id: cardId}});
-        if (!card) {
-            throw ApiError.BadRequest(`Карточка с id=${cardId} не найдена`);
-        }
+        if (!card) throw ApiError.BadRequest(`Карточка с id=${cardId} не найдена`);
 
-        card.term = term
-        card.definition = definition
-        if (isFavorite) card.is_favorite = isFavorite
+        card.term = term ?? card.term
+        card.definition = definition ?? card.definition
+        card.is_favorite = isFavorite === 'true' ? true :
+            isFavorite === 'false' ? false : card.is_favorite
 
-        if (isDeleteImg) {
-            if (card.dataValues.img_url) {
-                await fileService.removeFile(card.dataValues.img_url)
-                card.img_url = ''
-            }
+        if (imgUrl === 'null') {
+            if (card.dataValues.img_url) await fileService.removeFile(card.dataValues.img_url)
+            //@ts-ignore
+            card.img_url = null
         } else if (imgFile && email) {
             if (card.dataValues.img_url) await fileService.removeFile(card.dataValues.img_url)
             const imgUrl = await fileService.saveFile(imgFile, email)

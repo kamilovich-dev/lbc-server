@@ -4,7 +4,10 @@ import MailService from './mail-service'
 import tokenService from './token-service'
 import UserDto from 'dtos/user-dto'
 import ApiError from 'exceptions/api-error'
+import { Md5 } from 'ts-md5'
 import { user as UserModel } from 'models/user'
+import { redisClient } from 'app/index'
+import personalService from './personal-service'
 
 class UserService {
 
@@ -18,7 +21,7 @@ class UserService {
 
         const user = await UserModel.create({email, password: hashPassword, activation_link: activationLink, is_activated: false});
         const mailService = new MailService()
-        await mailService.sendActivationMail(email, `${process.env.API_URL}/api/user/activate/${activationLink}`);
+        await mailService.sendActivationMail(email, `${process.env.SERVER_URL}/api/user/activate/${activationLink}`);
 
         const userDto = new UserDto(user);
         return {user: userDto }
@@ -31,6 +34,7 @@ class UserService {
         }
         user.is_activated = true;
         await user.save();
+        await personalService.create(user.dataValues.id)
     }
 
     async login(email: string, password:string) {
@@ -81,6 +85,44 @@ class UserService {
     async getUsers() {
         const users = await UserModel.findAll();
         return users;
+    }
+
+    private async updatePassword(email: string, password: string) {
+        const user = await UserModel.findOne({ where: {email}});
+
+        if (!user) {
+            throw ApiError.BadRequest('Пользователь с таким email не найден');
+        }
+
+        if (!user.is_activated) {
+            throw ApiError.BadRequest('Пользователь не активирован');
+        }
+
+        const hashPassword = await bcrypt.hash(password, 3);
+        user.password = hashPassword
+        await user.save()
+
+        const userDto = new UserDto(user);
+        return { user: userDto }
+    }
+
+    async passwordForgot(email: string) {
+        const hash = Md5.hashStr(`${email}${Date.now()}${process.env.SECRET}`)
+        const link = `${process.env.CLIENT_URL}/password-reset?token=${hash}&email=${email}`
+        const key = `password-forgot-${email}`
+        await redisClient.set(key, hash)
+        const mailService = new MailService()
+        await mailService.sendForgotPasswordMail(email, link);
+        return true
+    }
+
+    async passwordReset(email: string, password: string, token: string) {
+        const key = `password-forgot-${email}`
+        const hash = await redisClient.get(key)
+        if (!hash) throw ApiError.BadRequest(`Token сброса пароля истек 1 `);
+        if (hash !== token)  throw ApiError.BadRequest(`Token сброса пароля истек 2`);
+        await redisClient.del(key)
+        return await this.updatePassword(email, password)
     }
 }
 

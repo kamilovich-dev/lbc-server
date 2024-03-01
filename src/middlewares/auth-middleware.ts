@@ -12,12 +12,10 @@ export default function (req: Request, res: Response, next: NextFunction) {
         if (!accessToken) {
             return next(ApiError.UnauthorizedError());
         }
-
         const userData = tokenService.validateAccessToken(accessToken);
         if (!userData) {
             return next(ApiError.UnauthorizedError());
         }
-
         req.user = userData;
         next();
     } catch (e) {

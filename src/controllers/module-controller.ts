@@ -26,8 +26,8 @@ class ModuleController {
             if (!errors.isEmpty()) {
                 return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
             }
-            const { moduleId, name, description } = req.body
-            const moduleData = await ModuleService.update(moduleId, name, description)
+
+            const moduleData = await ModuleService.update(req.body)
             return res.json(moduleData)
         } catch(e) {
             next(e);
@@ -54,8 +54,10 @@ class ModuleController {
             if (!userId) {
                 return next(ApiError.UnauthorizedError());
             }
-            const { by_search, by_alphabet } = req.query as unknown as TQuery
-            const modules = await ModuleService.getModules( userId, by_search, by_alphabet )
+            const { by_search, by_alphabet, by_favorite } = req.query as unknown as TQuery
+            const modules = await ModuleService.getModules( userId, by_search, by_alphabet, by_favorite )
+
+            // const pause = await new Promise((resolve) => setTimeout(resolve, 500))
             return res.json(modules)
         } catch(e) {
             next(e);
@@ -67,6 +69,7 @@ class ModuleController {
 interface TQuery {
     by_search: string,
     by_alphabet: string,
+    by_favorite: string
 }
 
 export default new ModuleController();

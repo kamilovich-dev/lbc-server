@@ -11,14 +11,21 @@ class ModuleService {
         return { module: moduleDto }
     }
 
-    async update(id: number, name: string, description: string) {
-        const module = await ModuleModel.findOne({ where: {id}});
+    async update(data: Omit<ModuleDto, 'id'>
+        & { moduleId: number, isPublished: boolean | undefined }) {
+
+        const { moduleId, name, description, isFavorite, isPublished } = data
+
+        const module = await ModuleModel.findOne({ where: {id: moduleId}});
         if (!module) {
-            throw ApiError.BadRequest(`Модуль с id=${id} не найден`);
+            throw ApiError.BadRequest(`Модуль с id=${moduleId} не найден`);
         }
 
-        module.name = name
-        module.description = description
+        module.name = name ?? module.name
+        module.description = description ?? module.description
+        module.is_favorite = isFavorite ?? module.is_favorite
+        module.is_published = isPublished ?? module.is_published
+
         await module.save()
 
         const moduleDto = new ModuleDto(module);
@@ -39,7 +46,7 @@ class ModuleService {
         await module.destroy()
     }
 
-    async getModules(userId: number, bySearch: string, byAlphabet: string) {
+    async getModules(userId: number, bySearch: string, byAlphabet: string, byFavorite: string) {
         const modules = await ModuleModel.findAll({where: { user_id: userId }, raw: true})
         let moduleDtos: ModuleDto[] = []
         for (let module of modules) {
@@ -62,6 +69,10 @@ class ModuleService {
                     ( a.name > b.name ? 1 : -1 ) :
                     ( a.name > b.name ? -1 : 1 )
             } )
+        }
+
+        if (byFavorite) {
+            moduleDtos = moduleDtos.filter(item => item.isFavorite === true)
         }
 
         return { modules: moduleDtos }
