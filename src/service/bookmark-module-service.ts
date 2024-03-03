@@ -33,10 +33,12 @@ class BookmarkModuleService {
 
     }
 
-    /* 1. Найти закладку с указанным userId и moduleId и удалить*/
-    async remove(userId: number, moduleId: number) {
-        const bookmarkModule =  await BookmarkModuleModel.findOne({ where: { user_id: userId, module_id: moduleId }});
-        if (!bookmarkModule) throw ApiError.BadRequest(`Закладка с userid=${userId}, moduleId=${moduleId} не найдена`);
+    /* 1. Найти закладку с указанным id и удалить*/
+    async remove(userId: number, bookmarkId: number) {
+        const bookmarkModule =  await BookmarkModuleModel.findOne({ where: { id: bookmarkId }});
+        if (!bookmarkModule) throw ApiError.BadRequest(`Закладка с bookmarkId=${bookmarkId} не найдена`);
+
+        if (userId !== bookmarkModule.dataValues.id) throw ApiError.BadRequest(`Нельзя удалить чужую закладку`);
 
         await bookmarkModule.destroy()
         return { succes: true }

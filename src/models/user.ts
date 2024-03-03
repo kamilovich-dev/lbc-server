@@ -10,7 +10,7 @@ import type { refresh_token, refresh_tokenId } from './refresh_token';
 
 export interface userAttributes {
   id: number;
-  login?: string;
+  login: string;
   email: string;
   password: string;
   activation_link?: string;
@@ -21,12 +21,12 @@ export interface userAttributes {
 
 export type userPk = "id";
 export type userId = user[userPk];
-export type userOptionalAttributes = "id" | "login" | "activation_link" | "createdAt" | "updatedAt";
+export type userOptionalAttributes = "id" | "activation_link" | "createdAt" | "updatedAt";
 export type userCreationAttributes = Optional<userAttributes, userOptionalAttributes>;
 
 export class user extends Model<userAttributes, userCreationAttributes> implements userAttributes {
   id!: number;
-  login?: string;
+  login!: string;
   email!: string;
   password!: string;
   activation_link?: string;
@@ -122,7 +122,7 @@ export class user extends Model<userAttributes, userCreationAttributes> implemen
     },
     login: {
       type: DataTypes.STRING(1024),
-      allowNull: true
+      allowNull: false
     },
     email: {
       type: DataTypes.STRING(1024),

@@ -29,7 +29,7 @@ class CardController {
             }
             const { email } = req.user
 
-            const file = req.files?.img as UploadedFile
+            const file = req.files?.imgFile as UploadedFile
             const cardData = await cardService.update(email, file, req.body)
             return res.json(cardData)
         } catch(e) {

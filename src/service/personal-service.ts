@@ -27,28 +27,28 @@ class PersonalService {
         return { personalData }
     }
 
-    async update(user_id: number, email: string, avatar_file: UploadedFile,
-        data: Omit<PersonalDto, 'user_id' >) {
+    async update(user_id: number, email: string, avatarFile: UploadedFile,
+        data: PersonalDto) {
 
         const personalData = await PersonalModel.findOne({ where: { user_id } });
         if (!personalData) throw ApiError.BadRequest(`Не найдены персональные данные пользователя с user_id ${user_id}`);
 
-        const { first_name, last_name, father_name, birth_date, avatar_url } = data
+        const { firstName, lastName, fatherName, birthDate, avatarUrl } = data
 
-        personalData.first_name = first_name ?? personalData.first_name
-        personalData.last_name = last_name ?? personalData.last_name
-        personalData.father_name = father_name ?? personalData.father_name
+        personalData.first_name = firstName ?? personalData.first_name
+        personalData.last_name = lastName ?? personalData.last_name
+        personalData.father_name = fatherName ?? personalData.father_name
         //@ts-ignore
-        personalData.birth_date = birth_date === 'null' ? null :
-            birth_date ?? personalData.birth_date
+        personalData.birth_date = birthDate === 'null' ? null :
+            birthDate ?? personalData.birth_date
 
-        if (avatar_url === 'null') {
+        if (avatarUrl === 'null') {
             if (personalData.dataValues.avatar_url) await fileService.removeFile(personalData.dataValues.avatar_url)
             //@ts-ignore
             personalData.avatar_url = null
-        } else if (avatar_file && email) {
+        } else if (avatarFile && email) {
             if (personalData.dataValues.avatar_url) await fileService.removeFile(personalData.dataValues.avatar_url)
-            const avatarUrl = await fileService.saveFile(avatar_file, email, 'avatar-')
+            const avatarUrl = await fileService.saveFile(avatarFile, email, 'avatar-')
             personalData.avatar_url = avatarUrl
         }
 

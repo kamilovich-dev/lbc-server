@@ -24,8 +24,18 @@ moduleRouter.post('/remove',
     moduleController.remove
 );
 
+moduleRouter.post('/add-to-folder',
+    body('moduleId').notEmpty().isNumeric(),
+    body('folderId').notEmpty().isNumeric(),
+    moduleController.addToFolder
+)
+
 moduleRouter.get('/',
     moduleController.getModules
+);
+
+moduleRouter.get('/public',
+    moduleController.getPublicModules
 );
 
 export default moduleRouter

@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { body, check } from 'express-validator'
+import { body } from 'express-validator'
 import cardController from 'controllers/card-controller'
 import fileUploadMiddleware from 'express-fileupload'
 
@@ -14,19 +14,19 @@ cardRouter.post('/create',
 );
 
 cardRouter.post('/update',
-    fileUploadMiddleware({}),
-    check('cardId').notEmpty(),
-    check('term').notEmpty(),
-    check('definition').optional(),
-    check('isFavorite').optional().custom((value, {req}) => {
+    fileUploadMiddleware(),
+    body('cardId').notEmpty(),
+    body('term').notEmpty(),
+    body('definition').optional(),
+    body('isFavorite').optional().custom((value, {req}) => {
         if (value === 'true' || value === 'false') return true
         return false
     }),
-    check('img').custom((value,{req}) => {
-        const img = req.files.img
-        if (!img) return true
+    body('imgFile').custom((value, { req }) => {
+        const imgFile = req.files?.imgFile
+        if (!imgFile) return true
 
-        const mimetype = img.mimetype
+        const mimetype = imgFile.mimetype
         if (mimetype === 'image/png'
             || mimetype === 'image/jpg'
                 || mimetype === 'image/jpeg') return true
@@ -43,7 +43,7 @@ cardRouter.post('/remove',
     cardController.remove
 );
 
-cardRouter.post('/switch_order',
+cardRouter.post('/switch-order',
     body('cardId1').notEmpty(),
     body('cardId2').notEmpty(),
     cardController.switchOrder

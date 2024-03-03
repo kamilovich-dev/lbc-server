@@ -7,6 +7,7 @@ class ModuleDto {
     isFavorite: moduleAttributes['is_favorite']
     isPublished: moduleAttributes['is_published']
     description: moduleAttributes['description'];
+    userId: moduleAttributes['user_id']
     createdAt?: Date
     updatedAt?: Date
     cardsCount?: number
@@ -17,6 +18,7 @@ class ModuleDto {
         this.description = model.description
         this.isFavorite = model.is_favorite
         this.isPublished = model.is_published
+        this.userId = model.user_id
         this.cardsCount = cardsCount
         this.createdAt = model.createdAt
         this.updatedAt = model.updatedAt

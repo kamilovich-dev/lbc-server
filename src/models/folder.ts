@@ -10,11 +10,13 @@ export interface folderAttributes {
   description?: string;
   is_published?: boolean;
   user_id?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export type folderPk = "id";
 export type folderId = folder[folderPk];
-export type folderOptionalAttributes = "id" | "description" | "is_published" | "user_id";
+export type folderOptionalAttributes = "id" | "description" | "is_published" | "user_id" | "createdAt" | "updatedAt";
 export type folderCreationAttributes = Optional<folderAttributes, folderOptionalAttributes>;
 
 export class folder extends Model<folderAttributes, folderCreationAttributes> implements folderAttributes {
@@ -23,6 +25,8 @@ export class folder extends Model<folderAttributes, folderCreationAttributes> im
   description?: string;
   is_published?: boolean;
   user_id?: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 
   // folder hasMany bookmark_folder via folder_id
   bookmark_folders!: bookmark_folder[];
@@ -86,7 +90,7 @@ export class folder extends Model<folderAttributes, folderCreationAttributes> im
     sequelize,
     tableName: 'folder',
     schema: 'public',
-    timestamps: false,
+    timestamps: true,
     indexes: [
       {
         name: "folder_pkey",

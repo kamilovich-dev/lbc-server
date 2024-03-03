@@ -12,8 +12,11 @@ class UserController {
             if (!errors.isEmpty()) {
                 return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
             }
-            const {email, password} = req.body;
-            const userData = await userService.registration(email, password);
+            const {email, login, password} = req.body;
+            if (!email && !login) {
+                return next(ApiError.BadRequest('Укажите логин или email'))
+            }
+            const userData = await userService.registration(email, login, password);
             return res.json(userData);
         } catch(e) {
             next(e);
@@ -32,8 +35,11 @@ class UserController {
 
     async login(req: Request, res: Response, next: NextFunction) {
         try {
-            const {email, password} = req.body;
-            const userData = await userService.login(email, password);
+            const {email, login, password} = req.body;
+            if (!email && !login) {
+                return next(ApiError.BadRequest('Укажите логин или email'))
+            }
+            const userData = await userService.login(email, login, password);
             res.cookie('refreshToken', userData.refreshToken, {maxAge: refreshTokenExpires, httpOnly: true})
             return res.json({
                 user: userData.user,
@@ -47,7 +53,6 @@ class UserController {
     async logout(req: Request, res: Response, next: NextFunction) {
         try {
             const { refreshToken } = req.cookies;
-            console.log(`try to logout: ${refreshToken}`)
             if (refreshToken) await userService.logout(refreshToken);
             res.clearCookie('refreshToken');
             return res.json( {} );
@@ -58,7 +63,6 @@ class UserController {
 
     async refresh(req: Request, res: Response, next: NextFunction) {
         try {
-            console.log('refresh trying')
             const {refreshToken} = req.cookies;
             const userData = await userService.refresh(refreshToken);
             res.cookie('refreshToken', userData.refreshToken, {maxAge: refreshTokenExpires, httpOnly: true})
@@ -90,8 +94,11 @@ class UserController {
             if (!errors.isEmpty()) {
                 return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
             }
-            const { email } = req.body
-            await userService.passwordForgot(email)
+            const { email, login } = req.body
+            if (!email && !login) {
+                return next(ApiError.BadRequest('Укажите логин или email'))
+            }
+            await userService.passwordForgot(email, login)
             return res.json({success: true, message: 'Проверьте почту'})
         } catch(e) {
             next(e)

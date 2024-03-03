@@ -10,15 +10,19 @@ import moduleRouter from 'router/module-router'
 import cardRouter from 'router/card-router'
 import personalRouter from 'router/personal-router'
 import bookmarkModuleRouter from 'router/bookmark-module-router'
+import bookmarkFolderRouter from 'router/bookmark-folder-router'
+import folderRouter from 'router/folder-router'
 import errorMiddleware from 'middlewares/error-middleware'
 import authMiddleware from 'middlewares/auth-middleware'
 import { initDb } from './db'
+import morgnamMiddleware from "lib/morgan-middleware";
 
 const PORT = process.env.PORT || 9999;
 const STATIC_PATH = process.env.STATIC_PATH || 'static'
 const app = express();
 export const redisClient = createClient()
 
+app.use(morgnamMiddleware)
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
@@ -45,9 +49,18 @@ app.use('/api/bookmark-module',
     authMiddleware,
     bookmarkModuleRouter)
 
+app.use('/api/bookmark-folder',
+    authMiddleware,
+    bookmarkFolderRouter)
+
+app.use('/api/folder',
+    authMiddleware,
+    folderRouter)
+
 app.use(express.static(STATIC_PATH))
 
 app.use(errorMiddleware);
+
 
 const startServer = async () => {
     try {

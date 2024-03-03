@@ -1,9 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
 import { validationResult } from 'express-validator'
 import ApiError from 'exceptions/api-error'
-import bookmarkModuleService from 'service/bookmark-module-service'
+import bookmarkFolderService from 'service/bookmark-folder-service'
 
-class BookmarkModuleController {
+class BookmarkFolderController {
     async create(req: Request, res: Response, next: NextFunction) {
         try {
             const errors = validationResult(req);
@@ -11,9 +11,9 @@ class BookmarkModuleController {
                 return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
             }
             const { id: userId } = req.user
-            const { moduleId } = req.body
+            const { folderId } = req.body
 
-            const data = await bookmarkModuleService.create(userId, moduleId)
+            const data = await bookmarkFolderService.create(userId, folderId)
             return res.json(data)
         } catch(e) {
             next(e);
@@ -28,7 +28,7 @@ class BookmarkModuleController {
             const { id: userId } = req.user
             const { bookmarkId } = req.body
 
-            const data = await bookmarkModuleService.remove(userId, bookmarkId)
+            const data = await bookmarkFolderService.remove(userId, bookmarkId)
             return res.json(data)
         } catch(e) {
             next(e);
@@ -41,7 +41,7 @@ class BookmarkModuleController {
             if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
 
             const { id: userId } = req.user
-            const data = await bookmarkModuleService.getBookmarks(userId)
+            const data = await bookmarkFolderService.getBookmarks(userId)
             return res.json(data)
 
         } catch(e) {
@@ -51,4 +51,4 @@ class BookmarkModuleController {
 
 }
 
-export default new BookmarkModuleController();
+export default new BookmarkFolderController();

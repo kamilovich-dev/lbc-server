@@ -8,23 +8,26 @@ import { Md5 } from 'ts-md5'
 import { user as UserModel } from 'models/user'
 import { redisClient } from 'app/index'
 import personalService from './personal-service'
+import { Op } from 'sequelize'
 
 class UserService {
 
-    async registration(email: string, password: string) {
-        const candidate = await UserModel.findOne({ where: { email, is_activated: true }, raw: true });
+    async registration(email: string, login:string, password: string) {
+        const candidate = email ? await UserModel.findOne({ where: { email }, raw: true })
+            : login ?  await UserModel.findOne({ where: { login }, raw: true }) : undefined
+
         if (candidate) {
-            throw ApiError.BadRequest(`Пользователь с почтовым адресом ${email} уже существует`);
+            throw ApiError.BadRequest(`Пользователь с email=${email} или логин=${login} уже существует`);
         }
         const hashPassword = await bcrypt.hash(password, 3);
         const activationLink = uuid.v4();
 
-        const user = await UserModel.create({email, password: hashPassword, activation_link: activationLink, is_activated: false});
+        const user = await UserModel.create({email, login, password: hashPassword, activation_link: activationLink, is_activated: false});
         const mailService = new MailService()
         await mailService.sendActivationMail(email, `${process.env.SERVER_URL}/api/user/activate/${activationLink}`);
 
         const userDto = new UserDto(user);
-        return {user: userDto }
+        return { user: userDto }
     }
 
     async activate(activationLink: string) {
@@ -37,11 +40,12 @@ class UserService {
         await personalService.create(user.dataValues.id)
     }
 
-    async login(email: string, password:string) {
-        const user = await UserModel.findOne({ where: {email}, raw: true});
+    async login(email: string, login:string, password:string) {
+        const user = email ? await UserModel.findOne({ where: { email }, raw: true })
+            : login ?  await UserModel.findOne({ where: { login }, raw: true }) : undefined
 
         if (!user) {
-            throw ApiError.BadRequest('Пользователь с таким email не найден');
+            throw ApiError.BadRequest('Пользователь не найден');
         }
 
         if (!user.is_activated) {
@@ -106,13 +110,18 @@ class UserService {
         return { user: userDto }
     }
 
-    async passwordForgot(email: string) {
-        const hash = Md5.hashStr(`${email}${Date.now()}${process.env.SECRET}`)
-        const link = `${process.env.CLIENT_URL}/password-reset?token=${hash}&email=${email}`
-        const key = `password-forgot-${email}`
+    async passwordForgot(email: string, login: string) {
+        const user = email ? await UserModel.findOne({ where: { email }, raw: true })
+            : login ? await UserModel.findOne({ where: { login }, raw: true }) : undefined
+
+        if (!user) throw ApiError.BadRequest('Не найден пользователь');
+
+        const hash = Md5.hashStr(`${user.email}${Date.now()}${process.env.SECRET}`)
+        const link = `${process.env.CLIENT_URL}/password-reset?token=${hash}&email=${user.email}`
+        const key = `password-forgot-${user.email}`
         await redisClient.set(key, hash)
         const mailService = new MailService()
-        await mailService.sendForgotPasswordMail(email, link);
+        await mailService.sendForgotPasswordMail(user.email, link);
         return true
     }
 

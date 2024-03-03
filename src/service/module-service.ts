@@ -1,4 +1,5 @@
 import { module as ModuleModel } from 'models/module'
+import { folder as FolderModel } from 'models/folder'
 import { card as CardModel } from 'models/card'
 import ModuleDto from 'dtos/module-dto'
 import ApiError from 'exceptions/api-error'
@@ -12,7 +13,7 @@ class ModuleService {
     }
 
     async update(data: Omit<ModuleDto, 'id'>
-        & { moduleId: number, isPublished: boolean | undefined }) {
+        & { moduleId: number }) {
 
         const { moduleId, name, description, isFavorite, isPublished } = data
 
@@ -76,6 +77,34 @@ class ModuleService {
         }
 
         return { modules: moduleDtos }
+    }
+
+    async getPublicModules() {
+        const modules = await ModuleModel.findAll({where: { is_published: true }, raw: true})
+        let moduleDtos: ModuleDto[] = []
+        for (let module of modules) {
+            const cards = await CardModel.findAll({where: { module_id: module.id }, raw: true})
+            moduleDtos.push(new ModuleDto(module, cards.length))
+        }
+        return { modules: moduleDtos }
+    }
+
+    async addToFolder(userId: number, moduleId: number, folderId: number) {
+        /*Проверить наличие модуля
+        Проверить наличия папки
+        Проверить, что пользователь является владельцем модуля и папки*/
+        const module = await ModuleModel.findOne({ where: { id: moduleId } })
+        if (!module) throw ApiError.BadRequest(`Модуль с id=${moduleId} не найден`);
+
+        const folder = await FolderModel.findOne({ where: { id: folderId } })
+        if (!folder) throw ApiError.BadRequest(`Папка с id=${folderId} не найдена`);
+
+        if (module.dataValues.user_id !== userId) throw ApiError.BadRequest(`Пользователь не является владельцем модуля`);
+        if (folder.dataValues.user_id !== userId) throw ApiError.BadRequest(`Пользователь не является владельцем папки`);
+
+        module.folder_id = folder.dataValues.id
+        await module.save()
+        return { succes: true }
     }
 
 }

@@ -64,6 +64,32 @@ class ModuleController {
         }
     }
 
+    async getPublicModules(req: Request, res: Response, next: NextFunction) {
+        try {
+            const modules = await ModuleService.getPublicModules()
+
+            // const pause = await new Promise((resolve) => setTimeout(resolve, 500))
+            return res.json(modules)
+        } catch(e) {
+            next(e);
+        }
+    }
+
+    async addToFolder(req: Request, res: Response, next: NextFunction) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
+            }
+            const {id: userId } = req.user
+            const {moduleId, folderId } = req.body
+            const data = await ModuleService.addToFolder(userId, moduleId, folderId)
+            return res.json(data)
+        } catch(e) {
+            next(e)
+        }
+    }
+
 }
 
 interface TQuery {

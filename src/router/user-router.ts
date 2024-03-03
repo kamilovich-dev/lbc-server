@@ -5,14 +5,21 @@ import userController from 'controllers/user-controller'
 const userRouter = Router();
 
 userRouter.post('/registration',
-    body('email').isEmail(),
+    body('email').optional().isEmail(),
+    body('login').optional().isString().isLength({min: 3, max: 64}),
     body('password').isLength({min: 6, max: 64}),
     userController.registration
 );
-userRouter.post('/login', userController.login);
+userRouter.post('/login',
+    body('email').optional().isEmail().isString(),
+    body('login').optional().isString(),
+    body('password').notEmpty().isString(),
+    userController.login);
+
 userRouter.post('/logout', userController.logout);
 userRouter.post('/password_forgot',
-    body('email').isEmail().notEmpty(),
+    body('login').optional().isString(),
+    body('email').optional().isEmail(),
     userController.passwordForgot
 )
 userRouter.post('/password_reset',
