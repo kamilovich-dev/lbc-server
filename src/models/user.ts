@@ -17,11 +17,12 @@ export interface userAttributes {
   is_activated: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  avatar_url?: string;
 }
 
 export type userPk = "id";
 export type userId = user[userPk];
-export type userOptionalAttributes = "id" | "activation_link" | "createdAt" | "updatedAt";
+export type userOptionalAttributes = "id" | "activation_link" | "createdAt" | "updatedAt" | "avatar_url";
 export type userCreationAttributes = Optional<userAttributes, userOptionalAttributes>;
 
 export class user extends Model<userAttributes, userCreationAttributes> implements userAttributes {
@@ -33,6 +34,7 @@ export class user extends Model<userAttributes, userCreationAttributes> implemen
   is_activated!: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  avatar_url?: string;
 
   // user hasMany bookmark_folder via user_id
   bookmark_folders!: bookmark_folder[];
@@ -139,6 +141,10 @@ export class user extends Model<userAttributes, userCreationAttributes> implemen
     is_activated: {
       type: DataTypes.BOOLEAN,
       allowNull: false
+    },
+    avatar_url: {
+      type: DataTypes.STRING(1024),
+      allowNull: true
     }
   }, {
     sequelize,

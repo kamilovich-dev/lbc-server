@@ -27,13 +27,12 @@ class PersonalService {
         return { personalData }
     }
 
-    async update(user_id: number, email: string, avatarFile: UploadedFile,
-        data: PersonalDto) {
+    async update(user_id: number, data: PersonalDto) {
 
         const personalData = await PersonalModel.findOne({ where: { user_id } });
         if (!personalData) throw ApiError.BadRequest(`Не найдены персональные данные пользователя с user_id ${user_id}`);
 
-        const { firstName, lastName, fatherName, birthDate, avatarUrl } = data
+        const { firstName, lastName, fatherName, birthDate } = data
 
         personalData.first_name = firstName ?? personalData.first_name
         personalData.last_name = lastName ?? personalData.last_name
@@ -41,16 +40,6 @@ class PersonalService {
         //@ts-ignore
         personalData.birth_date = birthDate === 'null' ? null :
             birthDate ?? personalData.birth_date
-
-        if (avatarUrl === 'null') {
-            if (personalData.dataValues.avatar_url) await fileService.removeFile(personalData.dataValues.avatar_url)
-            //@ts-ignore
-            personalData.avatar_url = null
-        } else if (avatarFile && email) {
-            if (personalData.dataValues.avatar_url) await fileService.removeFile(personalData.dataValues.avatar_url)
-            const avatarUrl = await fileService.saveFile(avatarFile, email, 'avatar-')
-            personalData.avatar_url = avatarUrl
-        }
 
         await personalData.save()
         return { personalData }

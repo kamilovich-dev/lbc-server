@@ -17,19 +17,6 @@ personalRouter.post('/update',
         const pattern = /^\d{4}-\d{2}-\d{2}$/;
         return pattern.test(value);
     }),
-    body('avatarUrl').optional().custom((value, {req}) => {
-        return (value === 'null') ? true : false
-    }).withMessage('Для avatar_url доступно только значение null'),
-    body('avatarFile').custom((value, {req}) => {
-        const avatarFile = req.files?.avatarFile
-        if (!avatarFile) return true
-
-        const mimetype = avatarFile.mimetype
-        if (mimetype === 'image/png'
-            || mimetype === 'image/jpg'
-                || mimetype === 'image/jpeg') return true
-        return false
-    }).withMessage('Неверный тип файла аватара'),
     personalController.update
 );
 

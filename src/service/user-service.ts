@@ -8,6 +8,8 @@ import { Md5 } from 'ts-md5'
 import { user as UserModel } from 'models/user'
 import { redisClient } from 'app/index'
 import personalService from './personal-service'
+import { UploadedFile } from 'express-fileupload'
+import fileService from 'service/file-service'
 import { Op } from 'sequelize'
 
 class UserService {
@@ -132,6 +134,33 @@ class UserService {
         if (hash !== token)  throw ApiError.BadRequest(`Token сброса пароля истек 2`);
         await redisClient.del(key)
         return await this.updatePassword(email, password)
+    }
+
+    async updateAvatar(email: string, avatarFile: UploadedFile | undefined, avatarUrl: string | undefined) {
+
+        const user = await UserModel.findOne({ where: { email } })
+        if (!user) throw ApiError.BadRequest('Не найден пользователь');
+
+        const result = {
+            success: false,
+            info: ''
+        }
+        if (avatarUrl === 'null') {
+            if (user.dataValues.avatar_url) await fileService.removeFile(user.dataValues.avatar_url)
+            //@ts-ignore
+            user.avatar_url = null
+            result.success = true
+            result.info = 'Аватар удален'
+        } else if (avatarFile && email) {
+            if (user.dataValues.avatar_url) await fileService.removeFile(user.dataValues.avatar_url)
+            const avatarUrl = await fileService.saveFile(avatarFile, email, 'avatar-')
+            user.avatar_url = avatarUrl
+            result.success = true
+            result.info = 'Аватар обнолен'
+        }
+
+        await user.save()
+        return { ...result }
     }
 }
 

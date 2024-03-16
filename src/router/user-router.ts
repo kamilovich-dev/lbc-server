@@ -1,6 +1,8 @@
 import { Router } from 'express'
-import { body } from 'express-validator'
+import { body, check } from 'express-validator'
 import userController from 'controllers/user-controller'
+import fileUploadMiddleware from 'express-fileupload'
+import authMiddleware from 'middlewares/auth-middleware'
 
 const userRouter = Router();
 
@@ -17,17 +19,44 @@ userRouter.post('/login',
     userController.login);
 
 userRouter.post('/logout', userController.logout);
-userRouter.post('/password_forgot',
+userRouter.post('/password-forgot',
     body('login').optional().isString(),
     body('email').optional().isEmail(),
     userController.passwordForgot
 )
-userRouter.post('/password_reset',
+
+userRouter.post('/password-reset',
      body('email').notEmpty().isEmail(),
      body('password').notEmpty().isLength({min: 6, max: 64}),
      body('token').notEmpty().isLength({min: 32, max: 32}),
      userController.passwordReset
 )
+
+userRouter.post('/update-avatar',
+    authMiddleware,
+    fileUploadMiddleware(),
+    body('avatarUrl').optional().custom( (value, { req }) => {
+        return (value === 'null' ) ? true : false
+    }).withMessage('Для avatarUrl доступно только значение null'),
+    body('avatarFile').custom((value, {req}) => {
+        const avatarFile = req.files?.avatarFile
+        if (!avatarFile) return true
+
+        const mimetype = avatarFile.mimetype
+        if (mimetype === 'image/png'
+            || mimetype === 'image/jpg'
+                || mimetype === 'image/jpeg') return true
+        return false
+    }).withMessage('Неверный тип файла. Допустимо .png, .jpg, .jpeg'),
+    body().custom(( value, {req}) => {
+        const avatarFile = req.files?.avatarFile
+        const avatarUrl = req.body.avatarUrl
+        if (!avatarFile && !avatarUrl) return false
+        return true
+    }).withMessage('Должен быть передан хотя бы один параметр'),
+     userController.updateAvatar
+)
+
 userRouter.get('/activate/:link', userController.activate);
 userRouter.get('/refresh_token', userController.refresh);
 userRouter.get('/', userController.getUsers);

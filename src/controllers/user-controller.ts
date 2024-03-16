@@ -4,6 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 import { refreshTokenExpires } from 'service/token-service';
 import ApiError from 'exceptions/api-error'
 import UserDto from 'dtos/user-dto';
+import { UploadedFile } from 'express-fileupload'
 
 class UserController {
     async registration(req: Request, res: Response, next: NextFunction) {
@@ -114,6 +115,21 @@ class UserController {
             const { email, password, token } = req.body
             const data = await userService.passwordReset(email, password, token)
             return res.json({success: true, message: 'Пароль изменен', data})
+        } catch(e) {
+            next(e)
+        }
+    }
+
+    async updateAvatar(req: Request, res: Response, next: NextFunction) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
+
+            const { email } = req.user
+            const { avatarUrl } = req.body
+            const file = req.files?.avatarFile as UploadedFile
+            const userData = await userService.updateAvatar(email, file, avatarUrl);
+            return res.json(userData);
         } catch(e) {
             next(e)
         }

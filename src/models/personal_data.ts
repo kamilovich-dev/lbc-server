@@ -4,7 +4,6 @@ import type { user, userId } from './user';
 
 export interface personal_dataAttributes {
   user_id: number;
-  avatar_url?: string;
   first_name?: string;
   last_name?: string;
   father_name?: string;
@@ -13,12 +12,11 @@ export interface personal_dataAttributes {
 
 export type personal_dataPk = "user_id";
 export type personal_dataId = personal_data[personal_dataPk];
-export type personal_dataOptionalAttributes = "avatar_url" | "first_name" | "last_name" | "father_name" | "birth_date";
+export type personal_dataOptionalAttributes = "first_name" | "last_name" | "father_name" | "birth_date";
 export type personal_dataCreationAttributes = Optional<personal_dataAttributes, personal_dataOptionalAttributes>;
 
 export class personal_data extends Model<personal_dataAttributes, personal_dataCreationAttributes> implements personal_dataAttributes {
   user_id!: number;
-  avatar_url?: string;
   first_name?: string;
   last_name?: string;
   father_name?: string;
@@ -40,10 +38,6 @@ export class personal_data extends Model<personal_dataAttributes, personal_dataC
         model: 'user',
         key: 'id'
       }
-    },
-    avatar_url: {
-      type: DataTypes.STRING(1024),
-      allowNull: true
     },
     first_name: {
       type: DataTypes.STRING(128),
