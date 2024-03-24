@@ -1,8 +1,6 @@
 import { folder as FolderModel } from 'models/folder'
 import { module as ModuleModel } from 'models/module'
-import { card as CardModel } from 'models/card'
 import FolderDto from 'dtos/folder-dto'
-import ModuleDto from 'dtos/module-dto'
 import ApiError from 'exceptions/api-error'
 import bookmarkFolderService from './bookmark-folder-service'
 import { bookmark_folder as BookmarFolderModel } from 'models/bookmark_folder'

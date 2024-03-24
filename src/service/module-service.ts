@@ -1,5 +1,4 @@
 import { module as ModuleModel } from 'models/module'
-import { folder as FolderModel } from 'models/folder'
 import { bookmark_module as BookmarkModuleModel } from 'models/bookmark_module'
 import { card as CardModel } from 'models/card'
 import ModuleDto from 'dtos/module-dto'
