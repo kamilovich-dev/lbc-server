@@ -26,24 +26,10 @@ class BookmarkFolderController {
             if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
 
             const { id: userId } = req.user
-            const { bookmarkId } = req.body
+            const { folderId } = req.body
 
-            const data = await bookmarkFolderService.remove(userId, bookmarkId)
+            const data = await bookmarkFolderService.remove(userId, folderId)
             return res.json(data)
-        } catch(e) {
-            next(e);
-        }
-    }
-
-    async getBookmarks(req: Request, res: Response, next: NextFunction) {
-        try {
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
-
-            const { id: userId } = req.user
-            const data = await bookmarkFolderService.getBookmarks(userId)
-            return res.json(data)
-
         } catch(e) {
             next(e);
         }

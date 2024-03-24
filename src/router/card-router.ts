@@ -6,22 +6,19 @@ import fileUploadMiddleware from 'express-fileupload'
 const cardRouter = Router();
 
 cardRouter.post('/create',
-    body('moduleId').notEmpty(),
-    body('term').notEmpty(),
-    body('definition').notEmpty(),
-    body('isFavorite').optional(),
+    body('moduleId').notEmpty().isNumeric(),
+    body('term').notEmpty().isString().isLength({ min: 1, max: 1024 }),
+    body('definition').notEmpty().isString().isLength({ min: 1, max: 1024 }),
+    body('isFavorite').optional().isBoolean(),
     cardController.create
 );
 
 cardRouter.post('/update',
     fileUploadMiddleware(),
-    body('cardId').notEmpty(),
-    body('term').notEmpty(),
-    body('definition').optional(),
-    body('isFavorite').optional().custom((value, {req}) => {
-        if (value === 'true' || value === 'false') return true
-        return false
-    }),
+    body('cardId').notEmpty().isNumeric(),
+    body('term').optional().isLength({ max: 1024 }),
+    body('definition').optional().isLength({ max: 1024 }),
+    body('isFavorite').optional().isBoolean(),
     body('imgFile').custom((value, { req }) => {
         const imgFile = req.files?.imgFile
         if (!imgFile) return true
@@ -39,18 +36,18 @@ cardRouter.post('/update',
 );
 
 cardRouter.post('/remove',
-    body('cardId').notEmpty(),
+    body('cardId').notEmpty().isNumeric(),
     cardController.remove
 );
 
 cardRouter.post('/switch-order',
-    body('cardId1').notEmpty(),
-    body('cardId2').notEmpty(),
+    body('cardId1').notEmpty().isNumeric(),
+    body('cardId2').notEmpty().isNumeric(),
     cardController.switchOrder
 )
 
 cardRouter.post('/',
-    body('moduleId').notEmpty(),
+    body('moduleId').notEmpty().isNumeric(),
     cardController.getCards
 );
 

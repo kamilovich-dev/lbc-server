@@ -6,13 +6,11 @@ import personalController from 'controllers/personal-controller'
 const personalRouter = Router()
 
 personalRouter.get('/', personalController.getPersonalData)
-personalRouter.post('/create', personalController.create)
 personalRouter.post('/update',
-    fileUploadMiddleware(),
-    body('firstName').notEmpty().isLength({min: 1, max: 64}),
-    body('lastName').optional().isLength({min: 0, max: 64}),
-    body('fatherName').optional().isLength({min: 0, max: 64}),
-    body('birthDate').custom((value, req) => {
+    body('firstName').optional().isLength({ max: 64}),
+    body('lastName').optional().isLength({ max: 64}),
+    body('fatherName').optional().isLength({ max: 64}),
+    body('birthDate').optional().custom((value, req) => {
         if (value === undefined || value === 'null') return true
         const pattern = /^\d{4}-\d{2}-\d{2}$/;
         return pattern.test(value);

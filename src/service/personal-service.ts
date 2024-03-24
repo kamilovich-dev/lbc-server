@@ -11,26 +11,24 @@ class PersonalService {
 
     async getPersonalData(userId: number) {
         const personalData = await PersonalModel.findOne({ where: { user_id: userId } });
-        if (!personalData) {
-            throw ApiError.BadRequest(`Персональные данные пользователя с userId ${userId} не найдены`);
-        }
+        if (!personalData) throw ApiError.BadRequest(`Персональные данные пользователя с userId ${userId} не найдены`);
+
         const personalDto = new PersonalDto(personalData)
         return {personalData: personalDto }
     }
 
-    async create(user_id: number) {
-        const candidate = await PersonalModel.findOne({ where: { user_id }, raw: true });
-        if (candidate) {
-            throw ApiError.BadRequest(`Персональные данные пользователя с user_id ${user_id} уже существуют`);
-        }
-        const personalData = await PersonalModel.create({ user_id });
+    async create(userId: number) {
+        const candidate = await PersonalModel.findOne({ where: { user_id: userId }, raw: true });
+        if (candidate) throw ApiError.BadRequest(`Персональные данные пользователя с userId ${userId} уже существуют`);
+
+        const personalData = await PersonalModel.create({ user_id: userId });
         return { personalData }
     }
 
-    async update(user_id: number, data: PersonalDto) {
+    async update(userId: number, data: PersonalDto) {
 
-        const personalData = await PersonalModel.findOne({ where: { user_id } });
-        if (!personalData) throw ApiError.BadRequest(`Не найдены персональные данные пользователя с user_id ${user_id}`);
+        const personalData = await PersonalModel.findOne({ where: { user_id: userId } });
+        if (!personalData) throw ApiError.BadRequest(`Не найдены персональные данные пользователя с userId ${userId}`);
 
         const { firstName, lastName, fatherName, birthDate } = data
 
@@ -42,7 +40,8 @@ class PersonalService {
             birthDate ?? personalData.birth_date
 
         await personalData.save()
-        return { personalData }
+        const personalDto = new PersonalDto(personalData)
+        return { personalData: personalDto }
     }
 }
 

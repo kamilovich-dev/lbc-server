@@ -7,9 +7,8 @@ class BookmarkModuleController {
     async create(req: Request, res: Response, next: NextFunction) {
         try {
             const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
-            }
+            if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
+
             const { id: userId } = req.user
             const { moduleId } = req.body
 
@@ -26,24 +25,10 @@ class BookmarkModuleController {
             if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
 
             const { id: userId } = req.user
-            const { bookmarkId } = req.body
+            const { moduleId } = req.body
 
-            const data = await bookmarkModuleService.remove(userId, bookmarkId)
+            const data = await bookmarkModuleService.remove(userId, moduleId)
             return res.json(data)
-        } catch(e) {
-            next(e);
-        }
-    }
-
-    async getBookmarks(req: Request, res: Response, next: NextFunction) {
-        try {
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
-
-            const { id: userId } = req.user
-            const data = await bookmarkModuleService.getBookmarks(userId)
-            return res.json(data)
-
         } catch(e) {
             next(e);
         }

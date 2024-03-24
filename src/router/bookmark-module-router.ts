@@ -10,10 +10,8 @@ bookmarkModuleRouter.post('/create',
 );
 
 bookmarkModuleRouter.post('/remove',
-    body('bookmarkId').notEmpty().isNumeric(),
+    body('moduleId').notEmpty().isNumeric(),
     bookmarkModuleController.remove
 );
-
-bookmarkModuleRouter.get('/', bookmarkModuleController.getBookmarks)
 
 export default bookmarkModuleRouter

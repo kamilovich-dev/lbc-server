@@ -1,20 +1,45 @@
 import { Router } from 'express'
-import { body } from 'express-validator'
+import { body, query } from 'express-validator'
 import moduleController from 'controllers/module-controller'
 
 const moduleRouter = Router();
 
 moduleRouter.post('/create',
-    body('name').notEmpty(),
-    body('description').optional(),
+    body('name').notEmpty().isLength({ min: 1, max: 512 }),
+    body('description').optional().isLength({ max: 512 }),
     moduleController.create
 );
 
+moduleRouter.get('/',
+    query('by_search').optional().isString().isLength({ max: 512 }),
+    query('by_alphabet').optional().isString().custom((value) => {
+        if (value === 'asc' || value === 'desc') return true
+        return false
+    }).withMessage('Для параметра by_alphabet допустмы только значения asc, desc'),
+    query('by_updated_date').optional().isString().custom((value) => {
+        if (value === 'asc' || value === 'desc') return true
+        return false
+    }).withMessage('Для параметра by_updated_date допустмы только значения asc, desc'),
+    moduleController.getModules
+);
+
+moduleRouter.get('/public',
+    query('by_search').optional().isString().isLength({ max: 512 }),
+    query('by_alphabet').optional().isString().custom((value) => {
+        if (value === 'asc' || value === 'desc') return true
+        return false
+    }).withMessage('Для параметра by_alphabet допустмы только значения asc, desc'),
+    query('by_updated_date').optional().isString().custom((value) => {
+        if (value === 'asc' || value === 'desc') return true
+        return false
+    }).withMessage('Для параметра by_updated_date допустмы только значения asc, desc'),
+    moduleController.getPublicModules
+);
+
 moduleRouter.post('/update',
-    body('moduleId').notEmpty(),
-    body('name').notEmpty(),
-    body('description').optional(),
-    body('isFavorite').optional().isBoolean(),
+    body('moduleId').notEmpty().isNumeric(),
+    body('name').optional().isLength({ max: 512 }),
+    body('description').optional().isLength({ max: 512 }),
     body('isPublished').optional().isBoolean(),
     moduleController.update
 );
@@ -22,20 +47,6 @@ moduleRouter.post('/update',
 moduleRouter.post('/remove',
     body('moduleId').notEmpty(),
     moduleController.remove
-);
-
-moduleRouter.post('/add-to-folder',
-    body('moduleId').notEmpty().isNumeric(),
-    body('folderId').notEmpty().isNumeric(),
-    moduleController.addToFolder
-)
-
-moduleRouter.get('/',
-    moduleController.getModules
-);
-
-moduleRouter.get('/public',
-    moduleController.getPublicModules
 );
 
 export default moduleRouter

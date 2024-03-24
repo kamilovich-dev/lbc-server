@@ -4,6 +4,7 @@ import { user as UserModel } from 'models/user'
 import { module as ModuleModel } from 'models/module'
 import ModuleDto from 'dtos/module-dto'
 import { bookmark_module as BookmarkModuleModel } from 'models/bookmark_module'
+import { Op } from 'sequelize'
 
 class BookmarkModuleService {
 
@@ -13,9 +14,6 @@ class BookmarkModuleService {
         4. Проверить, что не закладки с указанной парой userId, moduleId - избегаем дублей
     */
     async create(userId: number, moduleId: number) {
-
-        const user = await UserModel.findOne({ where: { id: userId} });
-        if (!user) throw ApiError.BadRequest(`Пользователь с id=${userId} не существует`);
 
         const module = await ModuleModel.findOne({ where: {id: moduleId}});
         if (!module) throw ApiError.BadRequest(`Модуль с id=${moduleId} не существует`);
@@ -27,21 +25,22 @@ class BookmarkModuleService {
         if (bookmarkModule) throw ApiError.BadRequest(`Обнаружены дубли закладки`);
 
         const createdBookmark = await BookmarkModuleModel.create({ user_id: userId, module_id: moduleId })
-        return {
-            moduleBookmark: createdBookmark
-        }
+        return {  id: createdBookmark.dataValues.id }
 
     }
 
     /* 1. Найти закладку с указанным id и удалить*/
-    async remove(userId: number, bookmarkId: number) {
-        const bookmarkModule =  await BookmarkModuleModel.findOne({ where: { id: bookmarkId }});
-        if (!bookmarkModule) throw ApiError.BadRequest(`Закладка с bookmarkId=${bookmarkId} не найдена`);
+    async remove(userId: number, moduleId: number) {
+        const bookmarkModules =  await BookmarkModuleModel.findAll({ where: { module_id: moduleId, user_id: userId }});
 
-        if (userId !== bookmarkModule.dataValues.id) throw ApiError.BadRequest(`Нельзя удалить чужую закладку`);
+        let deletedCount = 0
+        if (bookmarkModules) {
+            const promises = bookmarkModules.map(item => item.destroy())
+            await Promise.all(promises)
+            deletedCount = promises.length
+        }
 
-        await bookmarkModule.destroy()
-        return { succes: true }
+        return { message: `Удалено ${deletedCount} закладок` }
     }
 
     /*Получить закладки по указанному пользователю*/
@@ -50,17 +49,13 @@ class BookmarkModuleService {
 
         if (bookmarks && bookmarks.length > 0) {
             const module_ids = bookmarks.map(item => item.module_id)
-            let promises: Promise<any>[] = []
-            let result: ModuleDto[] = []
-            for (const id of module_ids) {
-                promises.push(ModuleModel.findOne({where: { id, is_published: true }}))
-            }
-            await Promise.all(promises)
-                .then(items => {
-                    result = items.map(item => new ModuleDto(item))
-                })
-            return { module_bookmarks: result }
-        } else return { module_bookmarks: [] }
+            const result = await ModuleModel.findAll({
+                where: {
+                    id: { [Op.or]: [...module_ids] },
+                    is_published: true
+            }})
+            return { moduleBookmarks: result }
+        } else return { moduleBookmarks: [] }
     }
 
 }

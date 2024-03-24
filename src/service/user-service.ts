@@ -10,33 +10,40 @@ import { redisClient } from 'app/index'
 import personalService from './personal-service'
 import { UploadedFile } from 'express-fileupload'
 import fileService from 'service/file-service'
-import { Op } from 'sequelize'
 
 class UserService {
 
     async registration(email: string, login:string, password: string) {
-        const candidate = email ? await UserModel.findOne({ where: { email }, raw: true })
-            : login ?  await UserModel.findOne({ where: { login }, raw: true }) : undefined
 
-        if (candidate) {
-            throw ApiError.BadRequest(`Пользователь с email=${email} или логин=${login} уже существует`);
-        }
+        const candidateByEmail = await UserModel.findOne({ where: { email, is_activated: true } })
+        if (candidateByEmail) throw ApiError.BadRequest(`Пользователь с email=${email} уже существует`);
+
+        const candidateByLogin = await UserModel.findOne({ where: { login, is_activated: true }})
+        if (candidateByLogin) throw ApiError.BadRequest(`Пользователь с login=${login} уже существует`);
+
         const hashPassword = await bcrypt.hash(password, 3);
         const activationLink = uuid.v4();
 
-        const user = await UserModel.create({email, login, password: hashPassword, activation_link: activationLink, is_activated: false});
         const mailService = new MailService()
         await mailService.sendActivationMail(email, `${process.env.SERVER_URL}/api/user/activate/${activationLink}`);
 
-        const userDto = new UserDto(user);
-        return { user: userDto }
+        const candidate = await UserModel.findOne({ where: { email, login } })
+        if (candidate) {
+            candidate.email = email
+            candidate.login = login
+            candidate.password = hashPassword
+            candidate.activation_link = activationLink
+            await candidate.save()
+            return { user:  new UserDto(candidate) }
+        } else {
+            const user = await UserModel.create({email, login, password: hashPassword, activation_link: activationLink, is_activated: false});
+            return {user: new UserDto(user) }
+        }
     }
 
     async activate(activationLink: string) {
         const user = await UserModel.findOne({ where: {activation_link: activationLink} });
-        if (!user) {
-            throw ApiError.BadRequest('Некорректная ссылка активации');
-        }
+        if (!user) throw ApiError.BadRequest('Некорректная ссылка активации');
         user.is_activated = true;
         await user.save();
         await personalService.create(user.dataValues.id)
@@ -124,7 +131,7 @@ class UserService {
         await redisClient.set(key, hash)
         const mailService = new MailService()
         await mailService.sendForgotPasswordMail(user.email, link);
-        return true
+        return { success: true, message: 'Проверьте почту' }
     }
 
     async passwordReset(email: string, password: string, token: string) {
@@ -143,20 +150,20 @@ class UserService {
 
         const result = {
             success: false,
-            info: ''
+            message: ''
         }
         if (avatarUrl === 'null') {
             if (user.dataValues.avatar_url) await fileService.removeFile(user.dataValues.avatar_url)
             //@ts-ignore
             user.avatar_url = null
             result.success = true
-            result.info = 'Аватар удален'
+            result.message = 'Аватар удален'
         } else if (avatarFile && email) {
             if (user.dataValues.avatar_url) await fileService.removeFile(user.dataValues.avatar_url)
             const avatarUrl = await fileService.saveFile(avatarFile, email, 'avatar-')
             user.avatar_url = avatarUrl
             result.success = true
-            result.info = 'Аватар обнолен'
+            result.message = 'Аватар обнолен'
         }
 
         await user.save()

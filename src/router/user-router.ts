@@ -7,26 +7,38 @@ import authMiddleware from 'middlewares/auth-middleware'
 const userRouter = Router();
 
 userRouter.post('/registration',
-    body('email').optional().isEmail(),
-    body('login').optional().isString().isLength({min: 3, max: 64}),
+    body('email').isEmail().isLength({min: 3, max:64}),
+    body('login').isString().isLength({min: 3, max: 64}),
     body('password').isLength({min: 6, max: 64}),
     userController.registration
 );
+
 userRouter.post('/login',
-    body('email').optional().isEmail().isString(),
-    body('login').optional().isString(),
-    body('password').notEmpty().isString(),
-    userController.login);
+    body('email').optional().isEmail().isString().isLength({min: 3, max:64}),
+    body('login').optional().isString().isLength({min: 3, max:64}),
+    body('password').notEmpty().isString().isLength({min: 6, max:64}),
+    body().custom((value, { req }) => {
+        const { email, login } = req.body
+        if (!email && !login) return false
+        return true
+    }).withMessage('Укажите логин или email'),
+    userController.login
+)
 
 userRouter.post('/logout', userController.logout);
 userRouter.post('/password-forgot',
-    body('login').optional().isString(),
-    body('email').optional().isEmail(),
+    body('login').optional().isString().isLength({min: 3, max:64}),
+    body('email').optional().isEmail().isLength({min: 3, max:64}),
+    body().custom((value, { req }) => {
+        const { email, login } = req.body
+        if (!email && !login) return false
+        return true
+    }).withMessage('Укажите логин или email'),
     userController.passwordForgot
 )
 
 userRouter.post('/password-reset',
-     body('email').notEmpty().isEmail(),
+     body('email').notEmpty().isEmail().isLength({min: 3, max:64}),
      body('password').notEmpty().isLength({min: 6, max: 64}),
      body('token').notEmpty().isLength({min: 32, max: 32}),
      userController.passwordReset
@@ -58,7 +70,7 @@ userRouter.post('/update-avatar',
 )
 
 userRouter.get('/activate/:link', userController.activate);
-userRouter.get('/refresh_token', userController.refresh);
+userRouter.get('/refresh-token', userController.refresh);
 userRouter.get('/', userController.getUsers);
 
 export default userRouter

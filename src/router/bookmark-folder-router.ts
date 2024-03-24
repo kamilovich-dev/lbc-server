@@ -10,10 +10,8 @@ bookmarkFolderRouter.post('/create',
 );
 
 bookmarkFolderRouter.post('/remove',
-    body('bookmarkId').notEmpty().isNumeric(),
+    body('folderId').notEmpty().isNumeric(),
     bookmarkFolderController.remove
 );
-
-bookmarkFolderRouter.get('/', bookmarkFolderController.getBookmarks)
 
 export default bookmarkFolderRouter

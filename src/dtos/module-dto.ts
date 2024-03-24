@@ -1,27 +1,34 @@
 import { moduleAttributes } from 'models/module'
 
+interface IModuleDtoOptions {
+    cardsCount?: number,
+    isBookmarked?: boolean,
+    createdBy?: string,
+    isOwner?: boolean,
+}
+
 class ModuleDto {
 
     id: moduleAttributes['id'];
     name: moduleAttributes['name'];
-    isFavorite: moduleAttributes['is_favorite']
     isPublished: moduleAttributes['is_published']
     description: moduleAttributes['description'];
     userId: moduleAttributes['user_id']
     createdAt?: Date
     updatedAt?: Date
-    cardsCount?: number
 
-    constructor(model: moduleAttributes, cardsCount?: number) {
+    options?: IModuleDtoOptions
+
+    constructor(model: moduleAttributes, options?: IModuleDtoOptions) {
         this.id = model.id;
         this.name = model.name;
         this.description = model.description
-        this.isFavorite = model.is_favorite
         this.isPublished = model.is_published
         this.userId = model.user_id
-        this.cardsCount = cardsCount
         this.createdAt = model.createdAt
         this.updatedAt = model.updatedAt
+
+        this.options = { ...options }
     }
 }
 

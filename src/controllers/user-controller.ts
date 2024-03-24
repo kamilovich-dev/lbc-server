@@ -10,13 +10,9 @@ class UserController {
     async registration(req: Request, res: Response, next: NextFunction) {
         try {
             const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
-            }
+            if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
+
             const {email, login, password} = req.body;
-            if (!email && !login) {
-                return next(ApiError.BadRequest('Укажите логин или email'))
-            }
             const userData = await userService.registration(email, login, password);
             return res.json(userData);
         } catch(e) {
@@ -36,12 +32,12 @@ class UserController {
 
     async login(req: Request, res: Response, next: NextFunction) {
         try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
+
             const {email, login, password} = req.body;
-            if (!email && !login) {
-                return next(ApiError.BadRequest('Укажите логин или email'))
-            }
             const userData = await userService.login(email, login, password);
-            res.cookie('refreshToken', userData.refreshToken, {maxAge: refreshTokenExpires, httpOnly: true})
+            res.cookie('refreshToken', userData.refreshToken, { maxAge: refreshTokenExpires, httpOnly: true })
             return res.json({
                 user: userData.user,
                 accessToken: userData.accessToken
@@ -55,8 +51,9 @@ class UserController {
         try {
             const { refreshToken } = req.cookies;
             if (refreshToken) await userService.logout(refreshToken);
+                else  next(ApiError.BadRequest('Не передан refreshToken'));
             res.clearCookie('refreshToken');
-            return res.json( {} );
+            return res.json( { success: true } );
         } catch(e) {
             next(e);
         }
@@ -96,11 +93,8 @@ class UserController {
                 return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
             }
             const { email, login } = req.body
-            if (!email && !login) {
-                return next(ApiError.BadRequest('Укажите логин или email'))
-            }
-            await userService.passwordForgot(email, login)
-            return res.json({success: true, message: 'Проверьте почту'})
+            const result = await userService.passwordForgot(email, login)
+            return res.json(result)
         } catch(e) {
             next(e)
         }

@@ -8,7 +8,6 @@ export interface moduleAttributes {
   id: number;
   name: string;
   description?: string;
-  is_favorite?: boolean;
   user_id: number;
   folder_id?: number;
   is_published?: boolean;
@@ -18,14 +17,13 @@ export interface moduleAttributes {
 
 export type modulePk = "id";
 export type moduleId = module[modulePk];
-export type moduleOptionalAttributes = "id" | "description" | "is_favorite" | "folder_id" | "is_published" | "createdAt" | "updatedAt";
+export type moduleOptionalAttributes = "id" | "description" | "folder_id" | "is_published" | "createdAt" | "updatedAt";
 export type moduleCreationAttributes = Optional<moduleAttributes, moduleOptionalAttributes>;
 
 export class module extends Model<moduleAttributes, moduleCreationAttributes> implements moduleAttributes {
   id!: number;
   name!: string;
   description?: string;
-  is_favorite?: boolean;
   user_id!: number;
   folder_id?: number;
   is_published?: boolean;
@@ -69,10 +67,6 @@ export class module extends Model<moduleAttributes, moduleCreationAttributes> im
     },
     description: {
       type: DataTypes.STRING(1024),
-      allowNull: true
-    },
-    is_favorite: {
-      type: DataTypes.BOOLEAN,
       allowNull: true
     },
     user_id: {

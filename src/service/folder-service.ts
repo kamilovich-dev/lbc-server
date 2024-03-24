@@ -4,6 +4,14 @@ import { card as CardModel } from 'models/card'
 import FolderDto from 'dtos/folder-dto'
 import ModuleDto from 'dtos/module-dto'
 import ApiError from 'exceptions/api-error'
+import bookmarkFolderService from './bookmark-folder-service'
+import { bookmark_folder as BookmarFolderModel } from 'models/bookmark_folder'
+
+export interface IGetFoldersQuery {
+    by_search: string,
+    by_alphabet: 'asc' | 'desc',
+    by_updated_date: 'asc' | 'desc'
+}
 
 class FolderService {
 
@@ -12,7 +20,8 @@ class FolderService {
         if (dublicate) throw ApiError.BadRequest(`Обнаружен дубликат папки`);
 
         const folder = await FolderModel.create({name, user_id: userId});
-        const folderDto = new FolderDto(folder);
+        const user = await folder.getUser()
+        const folderDto = new FolderDto(folder, { createdBy: user.dataValues.login, isOwner: true, modulesCount: 0} );
         return { folder: folderDto }
     }
 
@@ -48,36 +57,130 @@ class FolderService {
         })
         await Promise.all(promises)
 
+        /*Удалить все закладки на папку*/
+        const bookmarks = await BookmarFolderModel.findAll({ where:{ folder_id: folderId }  })
+        const deleteBookmarkPromises = bookmarks.map(item => item.destroy())
+        await Promise.all(deleteBookmarkPromises)
+
         await folder.destroy()
-        return { success: true }
+        return {}
     }
 
-    async getFolders(userId: number) {
-        const folders = await FolderModel.findAll({where: { user_id: userId }, raw: true})
-            .then(async folders => {
-                return await Promise.all(folders.map(async folder => {
-                    return ModuleModel.findAll({ where: { folder_id: folder.id } })
-                        .then(modules => {
-                            return { ...folder, modules }
-                        })
-            }))
-        })
+    async getFolders(userId: number, query: IGetFoldersQuery) {
+        const folders = await FolderModel.findAll({ where: { user_id: userId } })
+        const { folderBookmarks } = await bookmarkFolderService.getBookmarks(userId)
 
-        return { folders: folders }
+       const userFolders = [...folders, ...folderBookmarks]
+       let folderDtos: FolderDto[] = []
+
+       for (let folder of userFolders) {
+         const modules = await ModuleModel.findAll({where: { folder_id: folder.dataValues.id }})
+         const { createdBy, isOwner } = await folder.getUser().then(user => ({
+            createdBy: user.dataValues.login,
+            isOwner: user.dataValues.id === userId ? true : false
+        }))
+         folderDtos.push(new FolderDto(folder, { modulesCount: modules.length, createdBy, isOwner }))
+        }
+
+        folderDtos = this.filterFolders(folderDtos, query)
+        return { folders: folderDtos }
     }
 
-    async getPublicFolders() {
-        const folders = await FolderModel.findAll({where: { is_published: true }, raw: true})
-            .then(async folders => {
-                return await Promise.all(folders.map(async folder => {
-                    return ModuleModel.findAll({ where: { folder_id: folder.id, is_published: true } })
-                        .then(modules => {
-                            return { ...folder, modules }
-                        })
-            }))
-        })
+    async getPublicFolders(userId: number, query: IGetFoldersQuery) {
+        const bookmarks = await bookmarkFolderService.getBookmarks(userId)
 
-        return { folders: folders }
+        const folders = await FolderModel.findAll({ where: { is_published: true } })
+        let folderDtos: FolderDto[] = []
+
+        for (let folder of folders) {
+            const modules = await ModuleModel.findAll({where: { folder_id: folder.dataValues.id }})
+            const { createdBy, isOwner } = await folder.getUser().then(user => ({
+                createdBy: user.dataValues.login,
+                isOwner: user.dataValues.id === userId ? true : false
+            }))
+            const isBookmarked = bookmarks.folderBookmarks.find(item => item.id === folder.id) ? true : false
+            folderDtos.push(new FolderDto(folder, { modulesCount: modules.length, isBookmarked, createdBy, isOwner }))
+        }
+
+        folderDtos = this.filterFolders(folderDtos, query)
+        return { folders: folderDtos }
+    }
+
+    private filterFolders(folderDtos: FolderDto[], query: IGetFoldersQuery ): FolderDto[] {
+
+        const { by_alphabet: byAlphabet, by_search: bySearch, by_updated_date: byUpdatedDate } = query
+
+        if (bySearch) {
+            folderDtos = folderDtos.filter( folder => {
+                const name = folder.name?.toLowerCase()
+                const description = folder.description?.toLowerCase()
+                const s = bySearch.toLowerCase()
+                return ( name?.includes(s) || description?.includes(s) ) ? true : false
+            })
+        }
+
+        if (byAlphabet) {
+            folderDtos = folderDtos.sort( (a, b) => {
+                return (byAlphabet === 'asc') ?
+                    ( a.name > b.name ? 1 : -1 ) :
+                    ( a.name > b.name ? -1 : 1 )
+            } )
+        }
+
+        if (byUpdatedDate) {
+            folderDtos = folderDtos.sort( (a, b) => {
+                const a_time = a.updatedAt?.getTime()
+                const b_time = b.updatedAt?.getTime()
+
+                if (!a_time || !b_time) return -1
+
+                return (byUpdatedDate === 'asc') ?
+                    ( a_time > b_time ? 1 : -1 ) :
+                    ( a_time > b_time ? -1 : 1 )
+            } )
+        }
+
+        return folderDtos
+    }
+
+
+
+    /*Добавление модуля в папку*/
+    async addModule(userId: number, moduleId: number, folderId: number) {
+        /*Проверить наличие модуля
+        Проверить наличия папки
+        Проверить, что пользователь является владельцем модуля и папки*/
+        const module = await ModuleModel.findOne({ where: { id: moduleId } })
+        if (!module) throw ApiError.BadRequest(`Модуль с id=${moduleId} не найден`);
+
+        const folder = await FolderModel.findOne({ where: { id: folderId } })
+        if (!folder) throw ApiError.BadRequest(`Папка с id=${folderId} не найдена`);
+
+        if (module.dataValues.user_id !== userId) throw ApiError.BadRequest(`Пользователь не является владельцем модуля`);
+        if (folder.dataValues.user_id !== userId) throw ApiError.BadRequest(`Пользователь не является владельцем папки`);
+
+        module.folder_id = folder.dataValues.id
+        await module.save()
+        return { }
+    }
+
+    async removeModule(userId: number, moduleId: number, folderId: number) {
+        /*Проверить наличие модуля
+        Проверить наличия папки
+        Проверить, что пользователь является владельцем модуля и папки*/
+        const module = await ModuleModel.findOne({ where: { id: moduleId } })
+        if (!module) throw ApiError.BadRequest(`Модуль с id=${moduleId} не найден`);
+
+        const folder = await FolderModel.findOne({ where: { id: folderId } })
+        if (!folder) throw ApiError.BadRequest(`Папка с id=${folderId} не найдена`);
+
+        if (module.dataValues.user_id !== userId) throw ApiError.BadRequest(`Пользователь не является владельцем модуля`);
+        if (folder.dataValues.user_id !== userId) throw ApiError.BadRequest(`Пользователь не является владельцем папки`);
+
+        //@ts-ignore
+        module.folder_id = null
+        await module.save()
+        return { }
     }
 
 }
