@@ -14,8 +14,8 @@ userRouter.post('/registration',
 );
 
 userRouter.post('/login',
-    body('email').optional().isEmail().isString().isLength({min: 3, max:64}),
-    body('login').optional().isString().isLength({min: 3, max:64}),
+    body('email').optional().isEmail().isString().isLength({ max:64}),
+    body('login').optional().isString().isLength({ max:64}),
     body('password').notEmpty().isString().isLength({min: 6, max:64}),
     body().custom((value, { req }) => {
         const { email, login } = req.body

@@ -6,9 +6,9 @@ import ApiError from 'exceptions/api-error'
 import bookmarkModuleService from './bookmark-module-service'
 
 export interface IGetModulesQuery {
-    by_search: string,
-    by_alphabet: 'asc' | 'desc',
-    by_updated_date: 'asc' | 'desc'
+    by_search?: string,
+    by_alphabet?: 'asc' | 'desc',
+    by_updated_date?: 'asc' | 'desc'
 }
 
 class ModuleService {

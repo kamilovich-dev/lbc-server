@@ -60,5 +60,4 @@ folderRouter.post('/remove',
     folderController.remove
 );
 
-
 export default folderRouter

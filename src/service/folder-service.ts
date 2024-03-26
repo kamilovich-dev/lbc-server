@@ -6,9 +6,9 @@ import bookmarkFolderService from './bookmark-folder-service'
 import { bookmark_folder as BookmarFolderModel } from 'models/bookmark_folder'
 
 export interface IGetFoldersQuery {
-    by_search: string,
-    by_alphabet: 'asc' | 'desc',
-    by_updated_date: 'asc' | 'desc'
+    by_search?: string,
+    by_alphabet?: 'asc' | 'desc',
+    by_updated_date?: 'asc' | 'desc',
 }
 
 class FolderService {
