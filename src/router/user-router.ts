@@ -71,6 +71,8 @@ userRouter.post('/update-avatar',
 
 userRouter.get('/activate/:link', userController.activate);
 userRouter.get('/refresh-token', userController.refresh);
-userRouter.get('/', userController.getUsers);
+userRouter.get('/',
+    authMiddleware,
+    userController.getUserData);
 
 export default userRouter

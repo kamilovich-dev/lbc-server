@@ -5,7 +5,7 @@ import tokenService from './token-service'
 import UserDto from 'dtos/user-dto'
 import ApiError from 'exceptions/api-error'
 import { Md5 } from 'ts-md5'
-import { user as UserModel } from 'models/user'
+import { user, user as UserModel } from 'models/user'
 import { redisClient } from 'app/index'
 import personalService from './personal-service'
 import { UploadedFile } from 'express-fileupload'
@@ -95,9 +95,12 @@ class UserService {
         return {...tokens, user: userDto }
     }
 
-    async getUsers() {
-        const users = await UserModel.findAll();
-        return users;
+    async getUserData(userId: number) {
+        const user = await UserModel.findOne({ where: { id: userId }});
+        if (!user) throw ApiError.BadRequest('Пользователь не найден');
+
+        const userDto = new UserDto(user)
+        return { user: userDto };
     }
 
     private async updatePassword(email: string, password: string) {

@@ -73,14 +73,11 @@ class UserController {
         }
     }
 
-    async getUsers(req: Request, res: Response, next: NextFunction) {
+    async getUserData(req: Request, res: Response, next: NextFunction) {
         try {
-            const users = await userService.getUsers();
-            const userDtos: UserDto[] = []
-            for (let user of users) {
-                userDtos.push(new UserDto(user))
-            }
-            return res.json( { users: userDtos });
+            const { id: userId } = req.user
+            const user = await userService.getUserData(userId);
+            return res.json(user);
         } catch(e) {
             next(e);
         }

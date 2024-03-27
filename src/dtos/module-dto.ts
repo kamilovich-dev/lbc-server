@@ -3,7 +3,8 @@ import { moduleAttributes } from 'models/module'
 interface IModuleDtoOptions {
     cardsCount?: number,
     isBookmarked?: boolean,
-    createdBy?: string,
+    createdByLogin?: string,
+    createdByAvatarUrl?: string,
     isOwner?: boolean,
 }
 

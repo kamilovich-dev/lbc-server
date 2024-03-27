@@ -69,11 +69,13 @@ class ModuleService {
 
         for (let module of userModules) {
             const cards = await CardModel.findAll({where: { module_id: module.id }})
-            const { createdBy, isOwner } = await module.getUser().then(user => ({
-                createdBy: user.dataValues.login,
+            const { createdByLogin, createdByAvatarUrl, isOwner } = await module.getUser().then(user => ({
+                createdByLogin: user.dataValues.login,
+                createdByAvatarUrl: user.dataValues.avatar_url,
                 isOwner: user.dataValues.id === userId ? true : false
             }))
-            moduleDtos.push(new ModuleDto(module, { cardsCount: cards.length, createdBy, isOwner } ))
+            const isBookmarked = moduleBookmarks.find(item => item.id === module.id) ? true : false
+            moduleDtos.push(new ModuleDto(module, { cardsCount: cards.length, createdByLogin, createdByAvatarUrl, isBookmarked, isOwner } ))
         }
 
         moduleDtos = this.filterModules(moduleDtos, query)
@@ -89,12 +91,13 @@ class ModuleService {
 
         for (let module of modules) {
             const cards = await CardModel.findAll({where: { module_id: module.id }})
-            const { createdBy, isOwner } = await module.getUser().then(user => ({
-                createdBy: user.dataValues.login,
+            const { createdByLogin, createdByAvatarUrl, isOwner } = await module.getUser().then(user => ({
+                createdByLogin: user.dataValues.login,
+                createdByAvatarUrl: user.dataValues.avatar_url,
                 isOwner: user.dataValues.id === userId ? true : false
             }))
             const isBookmarked = bookmarks.moduleBookmarks.find(item => item.id === module.id) ? true : false
-            moduleDtos.push( new ModuleDto(module, { cardsCount: cards.length, isBookmarked, createdBy, isOwner }) )
+            moduleDtos.push( new ModuleDto(module, { cardsCount: cards.length, isBookmarked, createdByLogin, createdByAvatarUrl, isOwner }) )
         }
 
         moduleDtos = this.filterModules(moduleDtos, query)
