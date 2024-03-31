@@ -16,7 +16,14 @@ class ModuleService {
     /*Создание модуля*/
     async create(userId:number, name: string, description: string) {
         const module = await ModuleModel.create({name, description, user_id: userId});
-        const moduleDto = new ModuleDto(module);
+
+        const user = await module.getUser()
+        const moduleDto = new ModuleDto(module, {
+            createdByLogin: user.dataValues.login,
+            createdByAvatarUrl: user.dataValues.avatar_url,
+            isOwner: true,
+            cardsCount: 0,
+        });
         return { module: moduleDto }
     }
 
@@ -135,7 +142,7 @@ class ModuleService {
                 if (!a_time || !b_time) return -1
 
                 return (byUpdatedDate === 'asc') ?
-                    ( a_time > b_time ? 1 : -1 ) :
+                    ( a_time > b_time ? 1: -1 ) :
                     ( a_time > b_time ? -1 : 1 )
             } )
         }

@@ -12,8 +12,8 @@ class FolderController {
             if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
 
             const { id } = req.user
-            const { name } = req.body
-            const folderData =  await folderService.create(id, name)
+            const { name, description } = req.body
+            const folderData =  await folderService.create(id, name, description)
             return res.json(folderData)
         } catch(e) {
             next(e);
@@ -42,6 +42,20 @@ class FolderController {
             const { folderId } = req.body
             const folderData = await folderService.remove(userId, folderId)
             return res.json(folderData)
+        } catch(e) {
+            next(e);
+        }
+    }
+
+    async getModules(req: Request, res: Response, next: NextFunction) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
+
+            const { id: userId } = req.user
+            const { folderId } = req.body
+            const modules = await folderService.getModules( folderId, userId)
+            return res.json(modules)
         } catch(e) {
             next(e);
         }

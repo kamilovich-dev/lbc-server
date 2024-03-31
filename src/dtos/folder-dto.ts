@@ -4,7 +4,8 @@ import ModuleDto from './module-dto';
 interface IFolderDtoOptions {
     modulesCount?: number,
     isBookmarked?: boolean,
-    createdBy?: string,
+    createdByLogin?: string,
+    createdByAvatarUrl?: string,
     isOwner?: boolean,
 }
 

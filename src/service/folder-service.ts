@@ -2,8 +2,10 @@ import { folder as FolderModel } from 'models/folder'
 import { module as ModuleModel } from 'models/module'
 import FolderDto from 'dtos/folder-dto'
 import ApiError from 'exceptions/api-error'
+import { card as CardModel } from 'models/card'
 import bookmarkFolderService from './bookmark-folder-service'
 import { bookmark_folder as BookmarFolderModel } from 'models/bookmark_folder'
+import ModuleDto from 'dtos/module-dto'
 
 export interface IGetFoldersQuery {
     by_search?: string,
@@ -13,13 +15,17 @@ export interface IGetFoldersQuery {
 
 class FolderService {
 
-    async create(userId:number, name: string) {
+    async create(userId:number, name: string, description: string) {
         const dublicate = await FolderModel.findOne({ where: { user_id: userId, name: name } })
         if (dublicate) throw ApiError.BadRequest(`Обнаружен дубликат папки`);
 
-        const folder = await FolderModel.create({name, user_id: userId});
+        const folder = await FolderModel.create({name, description, user_id: userId});
         const user = await folder.getUser()
-        const folderDto = new FolderDto(folder, { createdBy: user.dataValues.login, isOwner: true, modulesCount: 0} );
+        const folderDto = new FolderDto(folder, {
+            createdByLogin: user.dataValues.login,
+            createdByAvatarUrl: user.dataValues.avatar_url,
+            isOwner: true,
+            modulesCount: 0} );
         return { folder: folderDto }
     }
 
@@ -64,6 +70,34 @@ class FolderService {
         return {}
     }
 
+    async getModules(folderId: number, userId: number) {
+        const folder = await FolderModel.findOne({ where: { id: folderId } })
+        if (!folder) throw ApiError.BadRequest(`Папка с id=${folderId} не найдена`);
+
+        if (folder.user_id !== userId && !folder.dataValues.is_published) throw ApiError.BadRequest(`Папка с id=${folderId} не публичная`);
+
+        let modules: ModuleModel[] = []
+        if (folder.user_id === userId) {
+            modules =  await ModuleModel.findAll({ where: { folder_id: folderId, user_id: userId } })
+        } else modules =  await ModuleModel.findAll({ where: { folder_id: folderId, is_published: true } })
+
+        let moduleDtos: ModuleDto[] = []
+        for (let module of modules) {
+            const cards = await CardModel.findAll({where: { module_id: module.id }})
+            const { createdByLogin, createdByAvatarUrl, isOwner } = await module.getUser()
+            .then(user => {
+                return {
+                    createdByLogin: user.dataValues.login,
+                    createdByAvatarUrl: user.dataValues.avatar_url,
+                    isOwner: user.dataValues.id === userId ? true : false
+                }
+            })
+            moduleDtos.push(new ModuleDto( module, { cardsCount: cards.length, createdByLogin, createdByAvatarUrl, isOwner }))
+        }
+
+        return { modules: moduleDtos }
+    }
+
     async getFolders(userId: number, query: IGetFoldersQuery) {
         const folders = await FolderModel.findAll({ where: { user_id: userId } })
         const { folderBookmarks } = await bookmarkFolderService.getBookmarks(userId)
@@ -73,11 +107,13 @@ class FolderService {
 
        for (let folder of userFolders) {
          const modules = await ModuleModel.findAll({where: { folder_id: folder.dataValues.id }})
-         const { createdBy, isOwner } = await folder.getUser().then(user => ({
-            createdBy: user.dataValues.login,
+         const { createdByLogin, createdByAvatarUrl, isOwner } = await folder.getUser().then(user => ({
+            createdByLogin: user.dataValues.login,
+            createdByAvatarUrl: user.dataValues.avatar_url,
             isOwner: user.dataValues.id === userId ? true : false
         }))
-         folderDtos.push(new FolderDto(folder, { modulesCount: modules.length, createdBy, isOwner }))
+        const isBookmarked = folderBookmarks.find(item => item.id === folder.id) ? true : false
+         folderDtos.push(new FolderDto(folder, { modulesCount: modules.length, isBookmarked, createdByLogin, createdByAvatarUrl, isOwner }))
         }
 
         folderDtos = this.filterFolders(folderDtos, query)
@@ -92,12 +128,13 @@ class FolderService {
 
         for (let folder of folders) {
             const modules = await ModuleModel.findAll({where: { folder_id: folder.dataValues.id }})
-            const { createdBy, isOwner } = await folder.getUser().then(user => ({
-                createdBy: user.dataValues.login,
+            const { createdByLogin, createdByAvatarUrl, isOwner } = await folder.getUser().then(user => ({
+                createdByLogin: user.dataValues.login,
+                createdByAvatarUrl: user.dataValues.avatar_url,
                 isOwner: user.dataValues.id === userId ? true : false
             }))
             const isBookmarked = bookmarks.folderBookmarks.find(item => item.id === folder.id) ? true : false
-            folderDtos.push(new FolderDto(folder, { modulesCount: modules.length, isBookmarked, createdBy, isOwner }))
+            folderDtos.push(new FolderDto(folder, { modulesCount: modules.length, isBookmarked, createdByLogin, createdByAvatarUrl, isOwner }))
         }
 
         folderDtos = this.filterFolders(folderDtos, query)

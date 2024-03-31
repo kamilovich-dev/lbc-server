@@ -5,7 +5,8 @@ import folderController from 'controllers/folder-controller'
 const folderRouter = Router();
 
 folderRouter.post('/create',
-    body('name').notEmpty().isString().isLength({min: 1, max: 64}),
+    body('name').notEmpty().isString().isLength({max: 64}),
+    body('description').notEmpty().isString().isLength({max: 64}),
     folderController.create
 );
 
@@ -42,6 +43,10 @@ folderRouter.get('/',
     }).withMessage('Для параметра by_updated_date допустмы только значения asc, desc'),
     folderController.getFolders);
 
+folderRouter.post('/modules',
+    body('folderId').notEmpty().isNumeric(),
+    folderController.getModules
+)
 
 folderRouter.get('/public',
     query('by_search').optional().isString().isLength({ max: 512 }),
