@@ -32,15 +32,16 @@ class ModuleController {
         }
     }
 
-    async getPublicModules(req: Request, res: Response, next: NextFunction) {
+    async getModule(req: Request, res: Response, next: NextFunction) {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
-            const {id: userId } = req.user
-            const modules = await ModuleService.getPublicModules(userId, req.query as unknown as IGetModulesQuery )
+            const { id: userId } = req.user
+            const { moduleId } = req.body
+            const module = await ModuleService.getModule( userId, moduleId )
 
             // const pause = await new Promise((resolve) => setTimeout(resolve, 500))
-            return res.json(modules)
+            return res.json(module)
         } catch(e) {
             next(e);
         }

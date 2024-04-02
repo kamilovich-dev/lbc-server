@@ -1,7 +1,6 @@
 import * as Sequelize from 'sequelize';
 import { DataTypes, Model, Optional } from 'sequelize';
 import type { bookmark_folder, bookmark_folderId } from './bookmark_folder';
-import type { module, moduleId } from './module';
 import type { user, userId } from './user';
 
 export interface folderAttributes {
@@ -10,13 +9,14 @@ export interface folderAttributes {
   description?: string;
   is_published?: boolean;
   user_id?: number;
+  module_ids?: number[];
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 export type folderPk = "id";
 export type folderId = folder[folderPk];
-export type folderOptionalAttributes = "id" | "description" | "is_published" | "user_id" | "createdAt" | "updatedAt";
+export type folderOptionalAttributes = "id" | "description" | "is_published" | "user_id" | "module_ids" | "createdAt" | "updatedAt";
 export type folderCreationAttributes = Optional<folderAttributes, folderOptionalAttributes>;
 
 export class folder extends Model<folderAttributes, folderCreationAttributes> implements folderAttributes {
@@ -25,6 +25,7 @@ export class folder extends Model<folderAttributes, folderCreationAttributes> im
   description?: string;
   is_published?: boolean;
   user_id?: number;
+  module_ids?: number[];
   createdAt?: Date;
   updatedAt?: Date;
 
@@ -40,18 +41,6 @@ export class folder extends Model<folderAttributes, folderCreationAttributes> im
   hasBookmark_folder!: Sequelize.HasManyHasAssociationMixin<bookmark_folder, bookmark_folderId>;
   hasBookmark_folders!: Sequelize.HasManyHasAssociationsMixin<bookmark_folder, bookmark_folderId>;
   countBookmark_folders!: Sequelize.HasManyCountAssociationsMixin;
-  // folder hasMany module via folder_id
-  modules!: module[];
-  getModules!: Sequelize.HasManyGetAssociationsMixin<module>;
-  setModules!: Sequelize.HasManySetAssociationsMixin<module, moduleId>;
-  addModule!: Sequelize.HasManyAddAssociationMixin<module, moduleId>;
-  addModules!: Sequelize.HasManyAddAssociationsMixin<module, moduleId>;
-  createModule!: Sequelize.HasManyCreateAssociationMixin<module>;
-  removeModule!: Sequelize.HasManyRemoveAssociationMixin<module, moduleId>;
-  removeModules!: Sequelize.HasManyRemoveAssociationsMixin<module, moduleId>;
-  hasModule!: Sequelize.HasManyHasAssociationMixin<module, moduleId>;
-  hasModules!: Sequelize.HasManyHasAssociationsMixin<module, moduleId>;
-  countModules!: Sequelize.HasManyCountAssociationsMixin;
   // folder belongsTo user via user_id
   user!: user;
   getUser!: Sequelize.BelongsToGetAssociationMixin<user>;
@@ -85,6 +74,10 @@ export class folder extends Model<folderAttributes, folderCreationAttributes> im
         model: 'user',
         key: 'id'
       }
+    },
+    module_ids: {
+      type: DataTypes.ARRAY(DataTypes.INTEGER),
+      allowNull: true
     }
   }, {
     sequelize,

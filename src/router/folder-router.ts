@@ -43,22 +43,15 @@ folderRouter.get('/',
     }).withMessage('Для параметра by_updated_date допустмы только значения asc, desc'),
     folderController.getFolders);
 
+folderRouter.post('/',
+    body('folderId').notEmpty().isNumeric(),
+    folderController.getFolder
+)
+
 folderRouter.post('/modules',
     body('folderId').notEmpty().isNumeric(),
     folderController.getModules
 )
-
-folderRouter.get('/public',
-    query('by_search').optional().isString().isLength({ max: 512 }),
-    query('by_alphabet').optional().isString().custom((value) => {
-        if (value === 'asc' || value === 'desc') return true
-        return false
-    }).withMessage('Для параметра by_alphabet допустмы только значения asc, desc'),
-    query('by_updated_date').optional().isString().custom((value) => {
-        if (value === 'asc' || value === 'desc') return true
-        return false
-    }).withMessage('Для параметра by_updated_date допустмы только значения asc, desc'),
-    folderController.getPublicFolders);
 
 folderRouter.post('/remove',
     body('folderId').notEmpty().isNumeric(),

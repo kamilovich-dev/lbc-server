@@ -13,16 +13,16 @@ export interface userAttributes {
   login: string;
   email: string;
   password: string;
+  avatar_url?: string;
   activation_link?: string;
   is_activated: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  avatar_url?: string;
 }
 
 export type userPk = "id";
 export type userId = user[userPk];
-export type userOptionalAttributes = "id" | "activation_link" | "createdAt" | "updatedAt" | "avatar_url";
+export type userOptionalAttributes = "id" | "avatar_url" | "activation_link" | "createdAt" | "updatedAt";
 export type userCreationAttributes = Optional<userAttributes, userOptionalAttributes>;
 
 export class user extends Model<userAttributes, userCreationAttributes> implements userAttributes {
@@ -30,11 +30,11 @@ export class user extends Model<userAttributes, userCreationAttributes> implemen
   login!: string;
   email!: string;
   password!: string;
+  avatar_url?: string;
   activation_link?: string;
   is_activated!: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  avatar_url?: string;
 
   // user hasMany bookmark_folder via user_id
   bookmark_folders!: bookmark_folder[];
@@ -134,6 +134,10 @@ export class user extends Model<userAttributes, userCreationAttributes> implemen
       type: DataTypes.STRING(1024),
       allowNull: false
     },
+    avatar_url: {
+      type: DataTypes.STRING(1024),
+      allowNull: true
+    },
     activation_link: {
       type: DataTypes.STRING(1024),
       allowNull: true
@@ -141,10 +145,6 @@ export class user extends Model<userAttributes, userCreationAttributes> implemen
     is_activated: {
       type: DataTypes.BOOLEAN,
       allowNull: false
-    },
-    avatar_url: {
-      type: DataTypes.STRING(1024),
-      allowNull: true
     }
   }, {
     sequelize,

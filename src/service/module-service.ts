@@ -89,6 +89,27 @@ class ModuleService {
         return { modules: moduleDtos }
     }
 
+    /*Получение личных модулей*/
+    async getModule(userId: number, moduleId: number) {
+        const module = await ModuleModel.findOne({where: { id: moduleId }})
+
+        if (!module) throw ApiError.BadRequest(`Модуль не найден`);
+        if (!module?.is_published && module.dataValues.user_id !== userId) throw ApiError.BadRequest(`Модуль не опубликован`);
+
+        const { moduleBookmarks } = await bookmarkModuleService.getBookmarks(userId)
+
+        const cards = await CardModel.findAll({where: { module_id: module.id }})
+        const { createdByLogin, createdByAvatarUrl, isOwner } = await module.getUser().then(user => ({
+            createdByLogin: user.dataValues.login,
+            createdByAvatarUrl: user.dataValues.avatar_url,
+            isOwner: user.dataValues.id === userId ? true : false
+        }))
+        const isBookmarked = moduleBookmarks.find(item => item.id === module.id) ? true : false
+        const moduleDto = new ModuleDto(module, { cardsCount: cards.length, createdByLogin, createdByAvatarUrl, isBookmarked, isOwner })
+
+        return { module: moduleDto }
+    }
+
     /*Получение публичных модулей*/
     async getPublicModules(userId: number, query: IGetModulesQuery) {
         const bookmarks = await bookmarkModuleService.getBookmarks(userId)

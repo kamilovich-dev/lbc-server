@@ -12,6 +12,7 @@ import personalRouter from 'router/personal-router'
 import bookmarkModuleRouter from 'router/bookmark-module-router'
 import bookmarkFolderRouter from 'router/bookmark-folder-router'
 import folderRouter from 'router/folder-router'
+import globalSearchRouter from 'router/global-search-router'
 import errorMiddleware from 'middlewares/error-middleware'
 import authMiddleware from 'middlewares/auth-middleware'
 import { initDb } from './db'
@@ -56,6 +57,11 @@ app.use('/api/bookmark-folder',
 app.use('/api/folder',
     authMiddleware,
     folderRouter)
+
+app.use('/api/global-search',
+    authMiddleware,
+    globalSearchRouter
+)
 
 app.use(express.static(STATIC_PATH))
 

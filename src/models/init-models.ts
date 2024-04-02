@@ -58,8 +58,6 @@ export function initModels(sequelize: Sequelize) {
 
   bookmark_folder.belongsTo(folder, { as: "folder", foreignKey: "folder_id"});
   folder.hasMany(bookmark_folder, { as: "bookmark_folders", foreignKey: "folder_id"});
-  module.belongsTo(folder, { as: "folder", foreignKey: "folder_id"});
-  folder.hasMany(module, { as: "modules", foreignKey: "folder_id"});
   bookmark_module.belongsTo(module, { as: "module", foreignKey: "module_id"});
   module.hasMany(bookmark_module, { as: "bookmark_modules", foreignKey: "module_id"});
   bookmark_folder.belongsTo(user, { as: "user", foreignKey: "user_id"});

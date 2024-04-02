@@ -1,7 +1,6 @@
 import * as Sequelize from 'sequelize';
 import { DataTypes, Model, Optional } from 'sequelize';
 import type { bookmark_module, bookmark_moduleId } from './bookmark_module';
-import type { folder, folderId } from './folder';
 import type { user, userId } from './user';
 
 export interface moduleAttributes {
@@ -9,7 +8,6 @@ export interface moduleAttributes {
   name: string;
   description?: string;
   user_id: number;
-  folder_id?: number;
   is_published?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
@@ -17,7 +15,7 @@ export interface moduleAttributes {
 
 export type modulePk = "id";
 export type moduleId = module[modulePk];
-export type moduleOptionalAttributes = "id" | "description" | "folder_id" | "is_published" | "createdAt" | "updatedAt";
+export type moduleOptionalAttributes = "id" | "description" | "is_published" | "createdAt" | "updatedAt";
 export type moduleCreationAttributes = Optional<moduleAttributes, moduleOptionalAttributes>;
 
 export class module extends Model<moduleAttributes, moduleCreationAttributes> implements moduleAttributes {
@@ -25,16 +23,10 @@ export class module extends Model<moduleAttributes, moduleCreationAttributes> im
   name!: string;
   description?: string;
   user_id!: number;
-  folder_id?: number;
   is_published?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 
-  // module belongsTo folder via folder_id
-  folder!: folder;
-  getFolder!: Sequelize.BelongsToGetAssociationMixin<folder>;
-  setFolder!: Sequelize.BelongsToSetAssociationMixin<folder, folderId>;
-  createFolder!: Sequelize.BelongsToCreateAssociationMixin<folder>;
   // module hasMany bookmark_module via module_id
   bookmark_modules!: bookmark_module[];
   getBookmark_modules!: Sequelize.HasManyGetAssociationsMixin<bookmark_module>;
@@ -74,14 +66,6 @@ export class module extends Model<moduleAttributes, moduleCreationAttributes> im
       allowNull: false,
       references: {
         model: 'user',
-        key: 'id'
-      }
-    },
-    folder_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: 'folder',
         key: 'id'
       }
     },

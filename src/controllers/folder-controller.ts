@@ -74,14 +74,16 @@ class FolderController {
         }
     }
 
-    async getPublicFolders(req: Request, res: Response, next: NextFunction) {
+    async getFolder(req: Request, res: Response, next: NextFunction) {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
 
             const { id: userId } = req.user
-            const folders = await folderService.getPublicFolders( userId,  req.query as unknown as IGetFoldersQuery)
-            return res.json(folders)
+            const { folderId } = req.body
+
+            const folder = await folderService.getFolder( userId, folderId )
+            return res.json(folder)
         } catch(e) {
             next(e);
         }
