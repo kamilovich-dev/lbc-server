@@ -18,18 +18,17 @@ folderRouter.post('/update',
     folderController.update
 );
 
+folderRouter.post('/add-modules',
+    body('folderId').notEmpty().isNumeric(),
+    body('moduleIds').notEmpty().isArray().isNumeric(),
+    folderController.addModules
+)
+
 folderRouter.post('/add-module',
     body('moduleId').notEmpty().isNumeric(),
-    body('folderId').notEmpty().isNumeric(),
+    body('folderIds').notEmpty().isArray().isNumeric(),
     folderController.addModule
 )
-
-folderRouter.post('/remove-module',
-    body('moduleId').notEmpty().isNumeric(),
-    body('folderId').notEmpty().isNumeric(),
-    folderController.removeModule
-)
-
 
 folderRouter.get('/',
     query('by_search').optional().isString().isLength({ max: 512 }),
@@ -46,6 +45,11 @@ folderRouter.get('/',
 folderRouter.post('/',
     body('folderId').notEmpty().isNumeric(),
     folderController.getFolder
+)
+
+folderRouter.post('/by-module',
+    body('moduleId').notEmpty().isNumeric(),
+    folderController.getFoldersByModule
 )
 
 folderRouter.post('/modules',

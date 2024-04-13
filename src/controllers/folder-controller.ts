@@ -89,26 +89,41 @@ class FolderController {
         }
     }
 
-    async addModule(req: Request, res: Response, next: NextFunction) {
+    async getFoldersByModule(req: Request, res: Response, next: NextFunction) {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
+
+            const { id: userId } = req.user
+            const { moduleId } = req.body
+
+            const folders = await folderService.getFoldersByModule( userId, moduleId )
+            return res.json(folders)
+        } catch(e) {
+            next(e);
+        }
+    }
+
+    async addModules(req: Request, res: Response, next: NextFunction) {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
             const {id: userId } = req.user
-            const {moduleId, folderId } = req.body
-            const data = await folderService.addModule(userId, moduleId, folderId)
+            const {moduleIds, folderId } = req.body
+            const data = await folderService.addModules(userId, moduleIds, folderId)
             return res.json(data)
         } catch(e) {
             next(e)
         }
     }
 
-    async removeModule(req: Request, res: Response, next: NextFunction) {
+    async addModule(req: Request, res: Response, next: NextFunction) {
         try {
             const errors = validationResult(req);
             if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
             const {id: userId } = req.user
-            const {moduleId, folderId } = req.body
-            const data = await folderService.removeModule(userId, moduleId, folderId)
+            const {folderIds, moduleId } = req.body
+            const data = await folderService.addModule(userId, folderIds, moduleId)
             return res.json(data)
         } catch(e) {
             next(e)

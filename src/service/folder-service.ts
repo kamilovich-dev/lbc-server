@@ -6,6 +6,7 @@ import { card as CardModel } from 'models/card'
 import bookmarkFolderService from './bookmark-folder-service'
 import { bookmark_folder as BookmarFolderModel } from 'models/bookmark_folder'
 import ModuleDto from 'dtos/module-dto'
+import { Op } from 'sequelize'
 
 export interface IGetFoldersQuery {
     by_search?: string,
@@ -68,7 +69,7 @@ class FolderService {
 
         let modules: ModuleModel[] = []
         if (folder.user_id === userId) {
-            modules =  await ModuleModel.findAll({ where: { id: folder.module_ids, user_id: userId } })
+            modules =  await ModuleModel.findAll({ where: { id: folder.module_ids } })
         } else modules =  await ModuleModel.findAll({ where: { id: folder.module_ids, is_published: true } })
 
         let moduleDtos: ModuleDto[] = []
@@ -107,6 +108,34 @@ class FolderService {
         }
 
         folderDtos = this.filterFolders(folderDtos, query)
+        return { folders: folderDtos }
+    }
+
+    /*Возвращаем все папки, в которых есть модуль*/
+    async getFoldersByModule(userId: number, moduleId: number) {
+
+        const module = await ModuleModel.findOne({where: { id: moduleId }})
+        if (!module) throw ApiError.BadRequest(`Модуль не существует`);
+
+        const folders = await FolderModel.findAll({ where: { user_id: userId } })
+        const { folderBookmarks } = await bookmarkFolderService.getBookmarks(userId)
+
+       let userFolders = [...folders, ...folderBookmarks]
+       let folderDtos: FolderDto[] = []
+
+       userFolders = userFolders.filter(folder => folder.module_ids?.includes(moduleId))
+
+       for (let folder of userFolders) {
+         const modules = await ModuleModel.findAll({where: { id: folder.module_ids }})
+         const { createdByLogin, createdByAvatarUrl, isOwner } = await folder.getUser().then(user => ({
+            createdByLogin: user.dataValues.login,
+            createdByAvatarUrl: user.dataValues.avatar_url,
+            isOwner: user.dataValues.id === userId ? true : false
+         }))
+         const isBookmarked = folderBookmarks.find(item => item.id === folder.id) ? true : false
+         folderDtos.push(new FolderDto(folder, { modulesCount: modules.length, isBookmarked, createdByLogin, createdByAvatarUrl, isOwner }))
+        }
+
         return { folders: folderDtos }
     }
 
@@ -188,50 +217,70 @@ class FolderService {
         return folderDtos
     }
 
-    /*Добавление модуля в папку*/
-    async addModule(userId: number, moduleId: number, folderId: number) {
-        const module = await ModuleModel.findOne({ where: { id: moduleId } })
-        if (!module) throw ApiError.BadRequest(`Модуль с id=${moduleId} не найден`);
+    /*Добавление модулей в папку*/
+    async addModules(userId: number, moduleIds: number[], folderId: number) {
 
         const folder = await FolderModel.findOne({ where: { id: folderId } })
         if (!folder) throw ApiError.BadRequest(`Папка с id=${folderId} не найдена`);
 
+        if (folder.user_id !== userId) throw ApiError.BadRequest(`Нельзя редактировать чужую папку`);
+
+        const modules = await ModuleModel.findAll({ where: { id: moduleIds } })
         //Чужая папка - нельзя
         //Своя папка - можно
+        if (modules.length !== moduleIds.length) throw ApiError.BadRequest(`Попытка добавить несуществующие модули`);
 
         //Чужой модуль - можно, если опубликован
         //Свой модуль - можно
-        if (folder.user_id !== userId) throw ApiError.BadRequest(`Нельзя добавить модуль в чужую папку`);
-        if (module.user_id !== userId && !module.is_published) throw ApiError.BadRequest(`Нельзя добавить чужой неопубликованный модуль`);
-        if ( folder.module_ids && folder.module_ids.find(id => id === moduleId) ) throw ApiError.BadRequest(`Модуль уже добавлен в папку`);
+        const moduleIdsToAdd = []
+        for (let module of modules) {
+            if (module.user_id !== userId && !module.is_published) throw ApiError.BadRequest(`Нельзя добавить чужой неопубликованный модуль`);
+            moduleIdsToAdd.push(module.id)
+        }
 
-        folder.module_ids = folder.module_ids ? folder.module_ids : []
-        folder.module_ids = [...folder.module_ids, moduleId]
+        folder.module_ids = moduleIdsToAdd
         await folder.save()
         return { }
     }
 
-    async removeModule(userId: number, moduleId: number, folderId: number) {
-        /*Проверить наличие модуля
-        Проверить наличия папки
-        Проверить, что пользователь является владельцем модуля и папки*/
-        const module = await ModuleModel.findOne({ where: { id: moduleId } })
+    async addModule(userId: number, folderIds: number[], moduleId: number) {
+
+        const module = await ModuleModel.findOne({where: { id: moduleId }})
         if (!module) throw ApiError.BadRequest(`Модуль с id=${moduleId} не найден`);
 
-        const folder = await FolderModel.findOne({ where: { id: folderId } })
-        if (!folder) throw ApiError.BadRequest(`Папка с id=${folderId} не найдена`);
+        if (module.user_id !== userId && !module.is_published) throw ApiError.BadRequest(`Нельзя добавить чужой неопубликованный модуль`);
 
-        if (folder.user_id !== userId) throw ApiError.BadRequest(`Нельзя удалить модуль из чужой папки`);
-        if (!folder.module_ids ||
-            (folder.module_ids && !folder.module_ids.find(id => id === moduleId))) throw ApiError.BadRequest(`В папке нет указанного модуля`);
+        const folders = await FolderModel.findAll({ where: { id: folderIds } })
+        if (folders.length !== folderIds.length) throw ApiError.BadRequest(`Попытка добавить модуль в несуществующие папки`);
 
-        const idx = folder.module_ids.findIndex(id => id === moduleId)
+        const isThereNotMyFolder = folders.find(folder => folder.user_id !== userId) ? true : false
+        if (isThereNotMyFolder) throw ApiError.BadRequest(`Попытка добавить модуль в чужую папку`);
 
+        for (let folder of folders) {
+            folder.module_ids = folder.module_ids ?? []
+            const idx = folder.module_ids?.findIndex(id => id === moduleId)
+            if (idx === -1) {
+                const moduleIds = [...folder.module_ids]
+                moduleIds?.push(moduleId)
+                folder.module_ids = moduleIds
+                await folder.save()
+            }
+        }
 
-        const moduleIds = [...folder.module_ids]
-        moduleIds.splice(idx, 1)
-        folder.module_ids = moduleIds
-        await folder.save()
+        const allUserFolders = await FolderModel.findAll({where: {user_id: userId}})
+        const doesntProcessedFolders = allUserFolders.filter(folder => folders.find(item => item.id === folder.id) === undefined) /*Берем необработанные папки*/
+
+        for (let folder of doesntProcessedFolders) {
+            folder.module_ids = folder.module_ids ?? []
+            const idx = folder.module_ids?.findIndex(id => id === moduleId)
+            if (idx !== -1) {
+                const moduleIds = [...folder.module_ids]
+                moduleIds.splice(idx, 1)
+                folder.module_ids = moduleIds
+                await folder.save()
+            }
+        }
+
         return { }
     }
 

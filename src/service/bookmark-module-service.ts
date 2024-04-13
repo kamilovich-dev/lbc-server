@@ -51,7 +51,7 @@ class BookmarkModuleService {
             const module_ids = bookmarks.map(item => item.module_id)
             const result = await ModuleModel.findAll({
                 where: {
-                    id: { [Op.or]: [...module_ids] },
+                    id: module_ids,
                     is_published: true
             }})
             return { moduleBookmarks: result }

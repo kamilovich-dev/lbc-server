@@ -155,7 +155,7 @@ class UserService {
             success: false,
             message: ''
         }
-        if (avatarUrl === 'null') {
+        if (avatarUrl === '') {
             if (user.dataValues.avatar_url) await fileService.removeFile(user.dataValues.avatar_url)
             //@ts-ignore
             user.avatar_url = null

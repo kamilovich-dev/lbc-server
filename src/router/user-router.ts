@@ -48,8 +48,8 @@ userRouter.post('/update-avatar',
     authMiddleware,
     fileUploadMiddleware(),
     body('avatarUrl').optional().custom( (value, { req }) => {
-        return (value === 'null' ) ? true : false
-    }).withMessage('Для avatarUrl доступно только значение null'),
+        return (value == '' ) ? true : false
+    }).withMessage('Для avatarUrl доступно только пустое значение'),
     body('avatarFile').custom((value, {req}) => {
         const avatarFile = req.files?.avatarFile
         if (!avatarFile) return true
@@ -63,7 +63,7 @@ userRouter.post('/update-avatar',
     body().custom(( value, {req}) => {
         const avatarFile = req.files?.avatarFile
         const avatarUrl = req.body.avatarUrl
-        if (!avatarFile && !avatarUrl) return false
+        if (avatarFile === undefined && avatarUrl === undefined) return false
         return true
     }).withMessage('Должен быть передан хотя бы один параметр'),
      userController.updateAvatar

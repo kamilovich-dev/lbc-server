@@ -114,10 +114,13 @@ class UserController {
     async updateAvatar(req: Request, res: Response, next: NextFunction) {
         try {
             const errors = validationResult(req);
+
             if (!errors.isEmpty()) return next(ApiError.BadRequest('Ошибка при валидации', errors.array()));
 
             const { email } = req.user
             const { avatarUrl } = req.body
+
+
             const file = req.files?.avatarFile as UploadedFile
             const userData = await userService.updateAvatar(email, file, avatarUrl);
             return res.json(userData);

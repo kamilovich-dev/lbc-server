@@ -36,7 +36,7 @@ class PersonalService {
         personalData.last_name = lastName ?? personalData.last_name
         personalData.father_name = fatherName ?? personalData.father_name
         //@ts-ignore
-        personalData.birth_date = birthDate === 'null' ? null :
+        personalData.birth_date = birthDate === '' ? null :
             birthDate ?? personalData.birth_date
 
         await personalData.save()
